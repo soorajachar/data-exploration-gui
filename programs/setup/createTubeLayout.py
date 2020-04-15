@@ -9,7 +9,6 @@ sys.path.insert(0, 'programs/setup')
 sys.path.insert(0, 'programs/dataprocessing')
 from miscFunctions import setMaxWidth
 sys.path.insert(0, 'programs/plotting')
-from scrollable import Scrollable
 from tkinter import ttk
 import pandas as pd
 import numpy as np
