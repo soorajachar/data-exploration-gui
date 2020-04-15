@@ -116,7 +116,11 @@ class NewExperimentWindow(tk.Frame):
         e2 = tk.Entry(mainWindow)
         
         def createExperiment():
-            experimentName = e1.get()+'-'+e2.get()
+            experimentName = e2.get()
+            amendedExperimentName = experimentName.replace('-','_')
+            amendedExperimentName = amendedExperimentName.replace('/','_')
+            amendedExperimentName = amendedExperimentName.replace(' ','_')
+            experimentName = e1.get()+'-'+amendedExperimentName
             projectName = projectMenu.get()
             pathName = pathDict[projectName]
             subprocess.run(['mkdir',pathName+projectName+'/'+experimentName])
