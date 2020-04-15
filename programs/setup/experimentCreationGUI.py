@@ -28,6 +28,8 @@ class NewProjectWindow(tk.Frame):
                 rawPathName = rawPathName[:rawPathName[:-1].rfind('/')]+'/'
             if projectName not in os.listdir(rawPathName):
                 subprocess.run(['mkdir',rawPathName+projectName])
+            if 'misc' not in os.listdir():
+                subprocess.run(['mkdir','misc'])
             if 'pathDict.pkl' in os.listdir('misc'):
                 pathDict = pickle.load(open('misc/pathDict.pkl','rb'))
             else:
