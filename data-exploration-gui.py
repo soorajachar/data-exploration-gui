@@ -8,8 +8,7 @@ import tkinter as tk
 import tkinter.ttk
 import pandas as pd
 sys.path.insert(0, 'programs/setup')
-from experimentCreationGUI import NewExperimentWindow,NewProjectWindow
-from removeExperiment import RemoveExperimentWindow
+from experimentCreationGUI import NewExperimentWindow,NewProjectWindow,RemoveProjectWindow
 from experimentSetupGUI import ExperimentSetupStartPage
 sys.path.insert(0, 'programs/dataprocessing')
 from miscFunctions import setMaxWidth
@@ -44,17 +43,17 @@ class ExperimentSelectionPage(tk.Frame):
         mainWindow = tk.Frame(self)
         mainWindow.pack(side=tk.TOP,padx=10)
         
-        l = tk.Label(mainWindow,text='Data Exploration GUI')
+        l = tk.Label(mainWindow,text='Data Exploration GUI', font='Helvetica 18 bold')
         l.grid(row=0,column=0,columnspan=3)
         v = tk.StringVar(value='slt')
-        rb1 = tk.Radiobutton(mainWindow, text="Create new researcher/project",padx = 20, variable=v, value='rp')
-        rb1a = tk.Radiobutton(mainWindow, text="Associate new experiment with researcher/project",padx = 20, variable=v, value='ce')
-        rb1b = tk.Radiobutton(mainWindow,text="Select experiment: ",padx = 20, variable=v, value='slt')
-        rb1c = tk.Radiobutton(mainWindow,text="Remove experiment: ",padx = 20, variable=v, value='rmv')
-        rb1.grid(row=1,column=0,sticky=tk.W)
-        rb1a.grid(row=2,column=0,sticky=tk.W)
-        rb1b.grid(row=3,column=0,sticky=tk.W)
-        #rb1c.grid(row=3,column=0,sticky=tk.W)
+        rb1a = tk.Radiobutton(mainWindow, text="Create new project",padx = 20, variable=v, value='rp')
+        rb1b = tk.Radiobutton(mainWindow, text="Remove project",padx = 20, variable=v, value='rmv')
+        rb1c = tk.Radiobutton(mainWindow, text="Associate new experiment with researcher/project",padx = 20, variable=v, value='ce')
+        rb1d = tk.Radiobutton(mainWindow,text="Select experiment: ",padx = 20, variable=v, value='slt')
+        rb1a.grid(row=1,column=0,sticky=tk.W)
+        rb1b.grid(row=2,column=0,sticky=tk.W)
+        rb1c.grid(row=3,column=0,sticky=tk.W)
+        rb1d.grid(row=4,column=0,sticky=tk.W)
         
         def getUpdateData(event):
             projectName = self.projectMenu.get()
@@ -89,6 +88,8 @@ class ExperimentSelectionPage(tk.Frame):
             action = v.get()
             if action == 'rp':
                 master.switch_frame(NewProjectWindow,ExperimentSelectionPage)
+            elif action == 'rmv':
+                master.switch_frame(RemoveProjectWindow,ExperimentSelectionPage)
             elif action == 'ce':
                 master.switch_frame(NewExperimentWindow,ExperimentSelectionPage)
             elif action == 'slt':
@@ -97,8 +98,6 @@ class ExperimentSelectionPage(tk.Frame):
                 selectedExperiment = self.experimentMenu.get()
                 os.chdir(pathName+projectName+'/'+selectedExperiment)
                 master.switch_frame(ExperimentActionWindow,selectedExperiment)
-            elif action == 'rmv':
-                master.switch_frame(RemoveExperimentWindow,ExperimentSelectionPage)
 
         buttonWindow = tk.Frame(self)
         buttonWindow.pack(side=tk.TOP,padx=10,pady=10)
@@ -134,7 +133,6 @@ class ExperimentActionWindow(tk.Frame):
             elif action == 'ae':
                 master.switch_frame(AnalysisStartPage,selectedExperiment,ExperimentActionWindow)
         
-        print(os.getcwd())
         def backCommand():
             os.chdir(master.homedirectory)
             master.switch_frame(ExperimentSelectionPage)
