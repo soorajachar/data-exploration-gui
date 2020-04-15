@@ -1,4 +1,4 @@
-# Data exploration ZGUIZ 
+# Data exploration GUI 
 GUI to process, plot, and analyze bulk and single cell data exported from flowjo
 
 To use this package:
