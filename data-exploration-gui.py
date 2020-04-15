@@ -48,8 +48,8 @@ class ExperimentSelectionPage(tk.Frame):
         v = tk.StringVar(value='slt')
         rb1a = tk.Radiobutton(mainWindow, text="Create new project",padx = 20, variable=v, value='rp')
         rb1b = tk.Radiobutton(mainWindow, text="Remove project",padx = 20, variable=v, value='rmv')
-        rb1c = tk.Radiobutton(mainWindow, text="Associate new experiment with researcher/project",padx = 20, variable=v, value='ce')
-        rb1d = tk.Radiobutton(mainWindow,text="Select experiment: ",padx = 20, variable=v, value='slt')
+        rb1c = tk.Radiobutton(mainWindow, text="Associate new experiment with project",padx = 20, variable=v, value='ce')
+        rb1d = tk.Radiobutton(mainWindow,text="Work on existing experiment: ",padx = 20, variable=v, value='slt')
         rb1a.grid(row=1,column=0,sticky=tk.W)
         rb1b.grid(row=2,column=0,sticky=tk.W)
         rb1c.grid(row=3,column=0,sticky=tk.W)
@@ -76,13 +76,13 @@ class ExperimentSelectionPage(tk.Frame):
         self.projectMenu = tkinter.ttk.Combobox(mainWindow,values = projects)
         if len(self.pathDict) > 0:
             self.projectMenu['width'] = len(max(projects,key=len))
-        tk.Label(mainWindow,text='Researcher/project name: ').grid(row=3,column=1)
-        self.projectMenu.grid(row=3,column=2,sticky=tk.W)
+        tk.Label(mainWindow,text='Researcher/project name: ').grid(row=4,column=1)
+        self.projectMenu.grid(row=4,column=2,sticky=tk.W)
         self.projectMenu.bind('<<ComboboxSelected>>', getUpdateData)
 
         self.experimentMenu = tkinter.ttk.Combobox(mainWindow)
-        tk.Label(mainWindow,text='Experiment name: ').grid(row=4,column=1,sticky=tk.W)
-        self.experimentMenu.grid(row=4,column=2)
+        tk.Label(mainWindow,text='Experiment name: ').grid(row=5,column=1,sticky=tk.W)
+        self.experimentMenu.grid(row=5,column=2)
 
         def collectInput():
             action = v.get()

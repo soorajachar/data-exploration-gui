@@ -50,7 +50,7 @@ class NewProjectWindow(tk.Frame):
                 pickle.dump(pathDict,f)
             print('Project created!')
 
-        b = tk.Button(mainWindow,text='Create new researcher/project',command=lambda:createProject())
+        b = tk.Button(mainWindow,text='Create new project',command=lambda:createProject())
         
         l1.grid(row=0,column=0,sticky=tk.W)
         e1.grid(row=0,column=1,sticky=tk.W)
@@ -84,7 +84,7 @@ class RemoveProjectWindow(tk.Frame):
                 pickle.dump(pathDict,f)
             print('Project removed!')
 
-        b = tk.Button(mainWindow,text='REMOVE researcher/project',command=lambda:removeProject())
+        b = tk.Button(mainWindow,text='REMOVE project',command=lambda:removeProject())
         
         l1.grid(row=0,column=0,sticky=tk.W)
         projectMenu.grid(row=0,column=1)
