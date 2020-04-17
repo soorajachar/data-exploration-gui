@@ -274,7 +274,7 @@ class selectLevelValuesPage(tk.Frame):
         labelWindow1.pack(side=tk.TOP,padx=10,fill=tk.X,expand=True)
         
         #Make canvas
-        w1 = tk.Canvas(labelWindow1, width=600, height=400,background="white", scrollregion=(0,0,2000,33*maxNumLevelValues))
+        w1 = tk.Canvas(labelWindow1, width=1200, height=400,background="white", scrollregion=(0,0,2000,33*maxNumLevelValues))
 
         #Make scrollbar
         scr_v1 = tk.Scrollbar(labelWindow1,orient=tk.VERTICAL)

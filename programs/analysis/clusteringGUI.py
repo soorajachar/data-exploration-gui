@@ -251,7 +251,7 @@ class InteractiveClusteringPage(tk.Frame):
             plt.savefig('plots/clustermap-'+clustermapName,bbox_inches='tight')
             plt.clf()
             print('Clustered Data Frame And Phenotype Plot Saved')
-        tk.Button(clusterParameterWindow, text="Save Cluster",command=lambda: exportDataFrames()).grid(row=2,column=1)
+        tk.Button(clusterParameterWindow, text="Save Cluster",command=lambda: exportDataFrames(),font='Helvetica 14 bold').grid(row=2,column=1)
 
         def okCommand():
             exportDataFrames()
@@ -260,6 +260,6 @@ class InteractiveClusteringPage(tk.Frame):
         #Default save and quit buttons
         buttonWindow = tk.Frame(self)
         buttonWindow.grid(row=2,column=0,columnspan=2)
-        tk.Button(buttonWindow, text="OK",command=lambda: okCommand()).grid(row=0,column=0)
+        tk.Button(buttonWindow, text="OK",command=lambda: master.switch_frame(backpage,folderName,secondaryhomepage)).grid(row=0,column=0)
         tk.Button(buttonWindow, text="Back",command=lambda: master.switch_frame(ClusteringHomePage,folderName,backpage,secondaryhomepage)).grid(row=0,column=1)
         tk.Button(buttonWindow, text="Quit",command=lambda: quit()).grid(row=0,column=2)
