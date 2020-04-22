@@ -17,6 +17,7 @@ sys.path.insert(0, 'programs/plotting')
 from plottingGUI import PlotExperimentWindow 
 sys.path.insert(0, 'programs/analysis')
 from analysisGUI import AnalysisStartPage
+sys.path.insert(0, 'programs/analysis/CyTOF-Processing-master/')
 
 #Root class; handles frame switching in gui
 class MainApp(tk.Tk):
