@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.preprocessing import MinMaxScaler,MaxAbsScaler,StandardScaler
+from sklearn.preprocessing import MinMaxScaler,MaxAbsScaler,StandardScaler,RobustScaler
 from sklearn.decomposition import PCA
 from sklearn.manifold import Isomap
 from sklearn.manifold import TSNE
@@ -21,7 +21,7 @@ from HierarchicalClustering import UHAL
 import parc
 
 #Postprocessing attributes currently implemented
-scalingFunctionDict = {'minmax':MinMaxScaler,'maxabs':MaxAbsScaler,'standard':StandardScaler}
+scalingFunctionDict = {'minmax':MinMaxScaler,'maxabs':MaxAbsScaler,'standard':StandardScaler,'robust':RobustScaler}
 
 dimReductionFunctionDict = {'umap':UMAP,'tsne':TSNE,'FItSNE':FItSNE,'isomap':Isomap,'pca':PCA}
 dimReductionNumericParameterDict = {'umap':['n_neighbors','min_dist'],'tsne':['perplexity'],'FItSNE':['perplexity'],'isomap':['n_neighbors'],'pca':[]}
