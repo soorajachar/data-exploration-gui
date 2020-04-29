@@ -175,11 +175,49 @@ class SelectDimensionsPage(tk.Frame):
         print(folderName)
         print(backpage)
         print(secondaryhomepage)
+                
         global includeLevelValues2
         includeLevelValues2 = temp
+        
         labelWindow = tk.Frame(self)
         labelWindow.pack(side=tk.TOP,padx=10,fill=tk.X,expand=True)
-        l1 = tk.Label(labelWindow, text='Which specific measurables do you want to include in the dimension reduction?',pady=10).pack()
+        
+        """BEGIN TEMP SCROLLBAR CODE"""
+        labelWindow1 = tk.Frame(self)
+        labelWindow1.pack(side=tk.TOP,padx=10,fill=tk.X,expand=True)
+        
+        maxNumLevelValues = 0
+        for dataType in dataTypeDfDict:
+            dataTypeDf = dataTypeDfDict[dataType]
+            observableLevelDict = createLabelDict(dataTypeDf,[0,dataTypeObservableRangeDict[dataType]])
+            for levelName in observableLevelDict:
+                if len(observableLevelDict[levelName]) > maxNumLevelValues:
+                    maxNumLevelValues = len(observableLevelDict[levelName])
+
+        #Make canvas
+        w1 = tk.Canvas(labelWindow1, width=600, height=400,background="white", scrollregion=(0,0,1000,33*maxNumLevelValues))
+
+        #Make scrollbar
+        scr_v1 = tk.Scrollbar(labelWindow1,orient=tk.VERTICAL)
+        scr_v1.pack(side=tk.RIGHT,fill=tk.Y)
+        scr_v1.config(command=w1.yview)
+        #Add scrollbar to canvas
+        w1.config(yscrollcommand=scr_v1.set)
+        
+        scr_v2 = tk.Scrollbar(labelWindow1,orient=tk.HORIZONTAL)
+        scr_v2.pack(side=tk.BOTTOM,fill=tk.X)
+        scr_v2.config(command=w1.xview)
+        w1.config(xscrollcommand=scr_v2.set)
+
+        w1.pack(fill=tk.BOTH,expand=True)
+        #Make and add frame for widgets inside of canvas
+        #canvas_frame = tk.Frame(w1)
+        labelWindow = tk.Frame(w1)
+        labelWindow.pack()
+        w1.create_window((0,0),window=labelWindow, anchor = tk.NW)
+        """END TEMP SCROLLBAR CODE"""
+        
+        #l1 = tk.Label(labelWindow, text='Which specific measurables do you want to include?',pady=10).pack()
         dataTypeLevelCheckButtonList = []
         dataTypeLevelCheckButtonVariableList = []
         for dataType in dataTypeDfDict:
