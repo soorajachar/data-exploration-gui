@@ -350,7 +350,7 @@ class allLevelNamePage(tk.Frame):
                 if 'sampleNameFile.xlsx' in os.listdir('misc'):
                     e1.insert(tk.END, levels[j])
                     e2.insert(tk.END, str(levelValueNums[j]))
-                j+=1
+                    j+=1
                                     
             
             cb1 = tk.Checkbutton(mainWindow, text="",variable=v,onvalue=1,offvalue=0)

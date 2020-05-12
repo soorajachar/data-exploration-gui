@@ -331,8 +331,6 @@ def plotFacetedFigures(folderName,plotType,subPlotType,dataType,subsettedDfList,
                 else:
                     subsettedDf.columns = [plotOptions['Colorbar']['axisTitle']]
                     kwargs['z'] = plotOptions['Colorbar']['axisTitle']
-        #else:
-        #pass
         
         if dataType == 'singlecell':
             plottingDf = subsettedDf.copy()
