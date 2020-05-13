@@ -46,10 +46,10 @@ class ClusteringHomePage(tk.Frame):
         self.preprocessedDict = {}
         def getUpdateData(event):
             self.DimRedCombo['values'] = self.preprocessedDict[self.PreprocessedCombo.get()]
-            if len(self.DimRedCombo['values']) == 1:
-                self.DimRedCombo.set(self.DimRedCombo['values'][0])
-            elif len(self.DimRedCombo['values']) == 2:
+            if len(self.DimRedCombo['values']) == 2:
                 self.DimRedCombo.set(self.DimRedCombo['values'][1])
+            elif len(self.DimRedCombo['values']) == 3:
+                self.DimRedCombo.set(self.DimRedCombo['values'][2])
 
         maxFnLen = 0
         maxDfLen = 0
@@ -65,7 +65,7 @@ class ClusteringHomePage(tk.Frame):
                         maxDfLen = len(dimRed)
                 if not isinstance(dimreds,list):
                     dimreds = [dimreds]
-                self.preprocessedDict[scaledData] = ['new']+dimreds
+                self.preprocessedDict[scaledData] = ['none','new']+dimreds
 
         l1 = tk.Label(mainWindow, text="""Select Preprocessed Subset: """).grid(row=0,column=0,sticky=tk.W)
         self.PreprocessedCombo = tkinter.ttk.Combobox(mainWindow,values = list(self.preprocessedDict.keys()))
@@ -80,10 +80,10 @@ class ClusteringHomePage(tk.Frame):
         if len(self.PreprocessedCombo['values']) == 1:
             self.PreprocessedCombo.set(self.PreprocessedCombo['values'][0])
             self.DimRedCombo['values'] = self.preprocessedDict[self.PreprocessedCombo.get()]
-            if len(self.DimRedCombo['values']) == 1:
-                self.DimRedCombo.set(self.DimRedCombo['values'][0])
-            elif len(self.DimRedCombo['values']) == 2:
+            if len(self.DimRedCombo['values']) == 2:
                 self.DimRedCombo.set(self.DimRedCombo['values'][1])
+            elif len(self.DimRedCombo['values']) == 3:
+                self.DimRedCombo.set(self.DimRedCombo['values'][2])
 
         l3 = tk.Label(mainWindow, text="""Clustering Method: """).grid(row=2,column=0,sticky=tk.W)
         v3 = tk.StringVar()
@@ -98,12 +98,16 @@ class ClusteringHomePage(tk.Frame):
             dataSelectionFileName = self.PreprocessedCombo.get()
             scaledData = pickle.load(open('outputData/analysisFiles/scaledData/'+dataSelectionFileName,'rb'))
             dataSubsetTitle = dataSelectionFileName.split('-scaledBy')[0]
-            if self.DimRedCombo.get() != 'new':
+            if self.DimRedCombo.get() not in ['none','new']:
                 reductionFileName = self.DimRedCombo.get()
                 reducedData = pickle.load(open('outputData/analysisFiles/reducedData/'+reductionFileName,'rb'))
                 master.switch_frame(InteractiveClusteringPage,scaledData,reducedData,dataSubsetTitle,v3.get())
             else:
-                master.switch_frame(DimensionReductionHomePage,folderName,backpage,secondaryhomepage)
+                if self.DimRedCombo.get() == 'new':
+                    master.switch_frame(DimensionReductionHomePage,folderName,backpage,secondaryhomepage)
+                else:
+                    clusteringMethod = v3.get()
+                    master.switch_frame(NonInteractiveClusteringPage,dataSubsetTitle,clusteringMethod)
 
         buttonWindow = tk.Frame(self)
         buttonWindow.pack(side=tk.TOP,pady=10)
@@ -111,6 +115,8 @@ class ClusteringHomePage(tk.Frame):
         tk.Button(buttonWindow, text="OK",command=lambda: collectInputs()).grid(row=5,column=0)
         tk.Button(buttonWindow, text="Back",command=lambda: master.switch_frame(backpage,folderName,secondaryhomepage)).grid(row=5,column=1)
         tk.Button(buttonWindow, text="Quit",command=quit).grid(row=5,column=2)
+
+class NonInteractiveClusteringPage():
 
 class InteractiveClusteringPage(tk.Frame):
     def __init__(self, master,scaledData,reducedData,dataSubsetTitle,clusteringMethod):
