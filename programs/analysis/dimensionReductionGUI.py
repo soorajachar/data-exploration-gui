@@ -286,7 +286,7 @@ class InteractiveDimensionReductionPage(tk.Frame):
         tk.Button(self, text="Update hyperparameters",command=lambda: updateDimRedPlot(sliderList,radiobuttonVars)).grid(row=2,column=1,columnspan=2)
 
         tk.Button(self,text='Save plot',command=lambda: fig.savefig('plots/'+ods.getFileName(dataSubsetTitle,'reduce',dimRedType,self.currentReductionParameters,plotParameterDict=ipe.getDropdownValues(dropdownVarsDict),fileExtension='.png')[0],bbox_inches='tight')).grid(row=3,column=0)
-        tk.Button(self,text='Save dimensional reduction',command=lambda: exportDimRed()).grid(row=3,column=1,columnspan=2)
+        tk.Button(self,text='Save dimensional reduction',command=lambda: exportDimRed(),font='Helvetica 14 bold').grid(row=3,column=1,columnspan=2)
         plotAllDimReds = tk.BooleanVar()
         plotAllDimRedsButton = tk.Checkbutton(self,text='Save all feature-colored dimension reduction plots?',variable=plotAllDimReds)
         plotAllDimRedsButton.select()

@@ -37,8 +37,6 @@ class NewProjectWindow(tk.Frame):
                 rawPathName = rawPathName[:rawPathName[:-1].rfind('/')]+'/'
             if projectName not in os.listdir(rawPathName):
                 subprocess.run(['mkdir',rawPathName+projectName])
-            if 'misc' not in os.listdir():
-                subprocess.run(['mkdir','misc'])
             if 'pathDict.pkl' in os.listdir('misc'):
                 pathDict = pickle.load(open('misc/pathDict.pkl','rb'))
             else:
@@ -126,7 +124,7 @@ class NewExperimentWindow(tk.Frame):
             subprocess.run(['mkdir',pathName+projectName+'/'+experimentName])
             subfolders = ['inputData','outputData','plots','misc']
             subsubfoldersDict = {'inputData':['fcsFiles','singleCellCSVFiles','bulkCSVFiles'],'outputData':['excelFiles','pickleFiles','analysisFiles']}
-            subsubsubfoldersDict = {'analysisFiles':['scaledData','reducedData','clusteredData','subsettedData']}
+            subsubsubfoldersDict = {'analysisFiles':['scaledData','reducedData','clusteredData','subsettedData','clusterFrequencyData']}
             for subfolder in subfolders:
                 subprocess.run(['mkdir',pathName+projectName+'/'+experimentName+'/'+subfolder])
                 if subfolder in subsubfoldersDict.keys():

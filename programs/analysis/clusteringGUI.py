@@ -387,7 +387,7 @@ class InteractiveClusteringPage(tk.Frame):
             plt.savefig('plots/clustermap-'+clustermapName,bbox_inches='tight')
             plt.clf()
             print('Clustered Data Frame And Phenotype Plot Saved')
-        tk.Button(clusterParameterWindow, text="Save Cluster",command=lambda: exportDataFrames()).grid(row=2,column=1)
+        tk.Button(clusterParameterWindow, text="Save Cluster",command=lambda: exportDataFrames(),font='Helvetica 14 bold').grid(row=2,column=1)
 
         def okCommand():
             exportDataFrames()

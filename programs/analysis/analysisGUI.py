@@ -23,6 +23,7 @@ from dimensionReductionGUI import DimensionReductionHomePage
 from clusteringGUI import ClusteringHomePage
 from clusterComparisonGUI import ClusterComparisonHomePage
 from dataFrameValueSelectionGUI import DataSelectionHomePage
+from clusterFrequencyGUI import ClusterFrequencyHomePage
 
 class AnalysisStartPage(tk.Frame):
     num_args = 1
@@ -46,6 +47,8 @@ class AnalysisStartPage(tk.Frame):
         rb2a.grid(row=3,column=0,sticky=tk.W)
         rb3a = tk.Radiobutton(mainWindow,text='Cluster Comparison',variable=postProcessTypeVar,value='comparison')
         rb3a.grid(row=4,column=0,sticky=tk.W)
+        rb4a = tk.Radiobutton(mainWindow,text='Cluster Frequency Analysis',variable=postProcessTypeVar,value='frequency')
+        rb4a.grid(row=5,column=0,sticky=tk.W)
 
         def collectInputs():
             postProcessType = postProcessTypeVar.get()
@@ -59,6 +62,8 @@ class AnalysisStartPage(tk.Frame):
                 master.switch_frame(ClusteringHomePage,folderName,AnalysisStartPage,mainhomepage)
             elif postProcessType == 'comparison':
                 master.switch_frame(ClusterComparisonHomePage,folderName,AnalysisStartPage,mainhomepage)
+            elif postProcessType == 'frequency':
+                master.switch_frame(ClusterFrequencyHomePage,folderName,AnalysisStartPage,mainhomepage)
 
         buttonWindow = tk.Frame(self)
         buttonWindow.pack(side=tk.TOP,pady=10)

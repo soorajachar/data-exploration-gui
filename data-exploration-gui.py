@@ -68,6 +68,8 @@ class ExperimentSelectionPage(tk.Frame):
                 self.experimentMenu.set(self.experimentMenu['values'][0])
             self.experimentMenu['width'] = len(max(experiments,key=len))
         
+        if 'misc' not in os.listdir():
+            subprocess.run(['mkdir','misc'])
         if 'pathDict.pkl' not in os.listdir(master.homedirectory+'misc'):
             self.pathDict = {}
         else:
@@ -76,7 +78,7 @@ class ExperimentSelectionPage(tk.Frame):
         self.projectMenu = tkinter.ttk.Combobox(mainWindow,values = projects)
         if len(self.pathDict) > 0:
             self.projectMenu['width'] = len(max(projects,key=len))
-        tk.Label(mainWindow,text='Researcher/project name: ').grid(row=4,column=1)
+        tk.Label(mainWindow,text='Project name: ').grid(row=4,column=1)
         self.projectMenu.grid(row=4,column=2,sticky=tk.W)
         self.projectMenu.bind('<<ComboboxSelected>>', getUpdateData)
 

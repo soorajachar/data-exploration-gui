@@ -61,8 +61,11 @@ class checkUncheckAllButton(tk.Button):
 
 class PlotExperimentWindow(tk.Frame):
     def __init__(self, master,fName,sPage):
+        with open('misc/normalPlottingBool.pkl','wb') as f:
+            pickle.dump(True,f)
+
         global folderName,switchPage
-             
+            
         folderName = fName
         switchPage = sPage
 
@@ -142,6 +145,22 @@ class PlotExperimentWindow(tk.Frame):
 
 class PlotTypePage(tk.Frame):
     def __init__(self, master):
+
+        if 'normalPlottingBool.pkl' in os.listdir('misc'):
+            normalPlottingBool = pickle.load(open('misc/normalPlottingBool.pkl','rb'))
+        else:
+            normalPlottingBool = True
+
+        if not normalPlottingBool:
+            global useModifiedDf,dataType,experimentDf,trueLabelDict,folderName,switchPage
+            plottingParams = pickle.load(open('misc/plottingParams.pkl','rb'))
+            useModifiedDf = False
+            dataType = 'cell'
+            experimentDf = plottingParams['df']
+            trueLabelDict = createLabelDict(experimentDf)
+            folderName = plottingParams['folderName']
+            switchPage = 'a' 
+
         plottableFigureDict = {'1d':['histogram','kde'],'categorical':['bar','violin','box','point','swarm','strip'],'2d':['line','scatter'],'3d':['heatmap']}
         
         tk.Frame.__init__(self, master)
@@ -183,7 +202,10 @@ class PlotTypePage(tk.Frame):
         
         def backCommand():
             #os.chdir('../../')
-            master.switch_frame(PlotExperimentWindow,folderName,switchPage)
+            if normalPlottingBool:
+                master.switch_frame(PlotExperimentWindow,folderName,switchPage)
+            else:
+                master.switch_frame(plottingParams['homepage'],folderName,plottingParams['bp'],plottingParams['shp'])
             #master.switch_frame(PlotExperimentWindow,switchPage)
        
         buttonWindow = tk.Frame(self)
@@ -191,7 +213,7 @@ class PlotTypePage(tk.Frame):
         tk.Button(buttonWindow, text="OK",command=lambda: collectInputs()).pack(side=tk.LEFT)
         tk.Button(buttonWindow, text="Back",command=lambda: backCommand()).pack(side=tk.LEFT)
         tk.Button(buttonWindow, text="Quit",command=lambda: quit()).pack(side=tk.LEFT)
-        
+
 class selectLevelsPage(tk.Frame):
     def __init__(self, master,fsp,fName,backPage,pt,shp):
         tk.Frame.__init__(self, master)
@@ -274,7 +296,7 @@ class selectLevelValuesPage(tk.Frame):
         labelWindow1.pack(side=tk.TOP,padx=10,fill=tk.X,expand=True)
         
         #Make canvas
-        w1 = tk.Canvas(labelWindow1, width=600, height=400,background="white", scrollregion=(0,0,2000,33*maxNumLevelValues))
+        w1 = tk.Canvas(labelWindow1, width=1200, height=400,background="white", scrollregion=(0,0,2000,33*maxNumLevelValues))
 
         #Make scrollbar
         scr_v1 = tk.Scrollbar(labelWindow1,orient=tk.VERTICAL)
@@ -634,6 +656,10 @@ class plotElementsGUIPage(tk.Frame):
         
         buttonWindow = tk.Frame(self)
         buttonWindow.pack(side=tk.TOP,pady=10)
-        tk.Button(buttonWindow, text="OK",command=lambda: master.switch_frame(PlotExperimentWindow,folderName,switchPage)).grid(row=len(scalingList)+4,column=0)
+        
+        def okCommand():
+            master.switch_frame(PlotTypePage)
+        
+        tk.Button(buttonWindow, text="OK",command=lambda: okCommand()).grid(row=len(scalingList)+4,column=0)
         tk.Button(buttonWindow, text="Back",command=lambda: master.switch_frame(assignLevelsToParametersPage,includeLevelValueList)).grid(row=len(scalingList)+4,column=1)
         tk.Button(buttonWindow, text="Quit",command=lambda: quit()).grid(row=len(scalingList)+4,column=2)

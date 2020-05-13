@@ -40,14 +40,14 @@ def plot(plottingDf,subsettedDf,kwargs,facetKwargs,auxillaryKwargs,plotOptions):
         fg = sns.catplot(**kwargs,**facetKwargs,data=plottingDf,kind=auxillaryKwargs['subPlotType'],ci=errorBar,alpha=0.8,errwidth=1,capsize=0.05,**plotOptions['X']['figureDimensions'])
     #violin,swarm,strip
     elif auxillaryKwargs['subPlotType'] == 'violin':
-        fg = sns.catplot(**kwargs,facet_kws=facetKwargs,data=plottingDf,kind=auxillaryKwargs['subPlotType'],alpha=0.8,scale='width',**plotOptions['X']['figureDimensions'])
+        fg = sns.catplot(**kwargs,**facetKwargs,data=plottingDf,kind=auxillaryKwargs['subPlotType'],alpha=0.8,scale='width',**plotOptions['X']['figureDimensions'])
     elif  auxillaryKwargs['subPlotType'] in ['swarm','strip']:
         if plotOptions['Y']['axisScaling'] == 'Logarithmic':
             minVal = min(plottingDf[kwargs['y']])
             if minVal <= 0:
                 plottingDf[kwargs['y']] = plottingDf[kwargs['y']]+abs(minVal)+1
             plottingDf[kwargs['y']] = np.log10(plottingDf[kwargs['y']])
-        fg = sns.catplot(**kwargs,facet_kws=facetKwargs,data=plottingDf,kind=auxillaryKwargs['subPlotType'],alpha=0.7,edgecolor='black',linewidth=0.3,dodge=True,**plotOptions['X']['figureDimensions'])
+        fg = sns.catplot(**kwargs,**facetKwargs,data=plottingDf,kind=auxillaryKwargs['subPlotType'],alpha=0.7,edgecolor='black',linewidth=0.3,dodge=True,**plotOptions['X']['figureDimensions'])
     if auxillaryKwargs['addDistributionPoints']:
         NoneType = type(None)
         secondkwargs = kwargs.copy()
@@ -95,9 +95,20 @@ def plot(plottingDf,subsettedDf,kwargs,facetKwargs,auxillaryKwargs,plotOptions):
                         a = sns.stripplot(**secondkwargs,data=secondPlottingDf,ax=fg.fig.axes[axisIndex])
                     else:
                         a = sns.swarmplot(**secondkwargs,data=secondPlottingDf,ax=fg.fig.axes[axisIndex])
-                    axisIndex+=1
                     if not isinstance(a.legend_, NoneType):
                         a.legend_.remove()
+                    #When col wrapping:
+                    if 'col_wrap' in kwargs:
+                        cw = kwargs['col_wrap']
+                        bottomrow = int(len(list(pd.unique(plottingDf[kwargs['col']])))/cw)*cw
+                        #Remove all but bottom row x axis labels
+                        if axisIndex < bottomrow:
+                            fg.fig.axes[axisIndex].set_xlabel('')
+                        #Remove all but leftmost y axis labels
+                        if axisIndex % cw != 0:
+                            fg.fig.axes[axisIndex].set_ylabel('')
+                    axisIndex+=1
+ 
             else:
                 if auxillaryKwargs['subPlotType'] != 'violin' and swarm == False:
                     a = sns.stripplot(**secondkwargs,data=plottingDf,ax=fg.fig.axes[axisIndex])
