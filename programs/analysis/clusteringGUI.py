@@ -28,8 +28,32 @@ import clusterPlottingLibrary as cpl
 import itertools
 import operateOnDataSelection as ods
 import interactiveGUIElements as ipe
-from dimensionReductionGUI import DimensionReductionHomePage 
+from dimensionReductionGUI import DimensionReductionHomePage,InteractiveDimensionReductionPage
 idx = pd.IndexSlice
+
+def sampleDataFrame(df,sampleType,sampleSubset,fraction='',nmax=''):
+    #whole dataframe
+    if sampleSubset == 'all':
+        if sampleType == 'fraction':
+            if float(fraction) == 1.0:
+                sampledDf = df.copy()
+            else:
+                sampledDf = df.sample(frac=float(fraction))
+        else:
+            sampledDf = df.sample(n=int(nmax))
+    #per condition
+    else:
+        grouped = df.groupby(list(df.index.names)[:-1])
+        if sampleType == 'fraction':
+            if float(fraction) == 1.0:
+                sampledDf = df.copy()
+            else:
+                sampledDf = grouped.apply(lambda x: x.sample(frac=float(fraction)))
+                sampledDf = sampledDf.droplevel(list(range(len(df.index.names)-1)),axis=0)
+        else:
+            sampledDf = grouped.apply(lambda x: x.sample(int(nmax)) if len(x) > int(nmax) else x)
+            sampledDf = sampledDf.droplevel(list(range(len(df.index.names)-1)),axis=0)
+    return sampledDf
 
 class ClusteringHomePage(tk.Frame):
     num_args = 2
@@ -93,21 +117,24 @@ class ClusteringHomePage(tk.Frame):
             rb = tk.Radiobutton(mainWindow,text=clusteringFunc,padx = 20, variable=v3, value=clusteringFunc)
             rb.grid(row=i+2,column=1,sticky=tk.W)
             clusterRbList.append(rb)
+        
 
         def collectInputs():
+            global clusteringMethod,dataSubsetTitle,dataSelectionFileName
             dataSelectionFileName = self.PreprocessedCombo.get()
-            scaledData = pickle.load(open('outputData/analysisFiles/scaledData/'+dataSelectionFileName,'rb'))
             dataSubsetTitle = dataSelectionFileName.split('-scaledBy')[0]
+            clusteringMethod = v3.get()
             if self.DimRedCombo.get() not in ['none','new']:
                 reductionFileName = self.DimRedCombo.get()
+                scaledData = pickle.load(open('outputData/analysisFiles/scaledData/'+dataSelectionFileName,'rb'))
                 reducedData = pickle.load(open('outputData/analysisFiles/reducedData/'+reductionFileName,'rb'))
-                master.switch_frame(InteractiveClusteringPage,scaledData,reducedData,dataSubsetTitle,v3.get())
+                master.switch_frame(InteractiveClusteringPage,scaledData,reducedData,dataSubsetTitle,clusteringMethod)
             else:
                 if self.DimRedCombo.get() == 'new':
                     master.switch_frame(DimensionReductionHomePage,folderName,backpage,secondaryhomepage)
+                #Cluster, then reduce dimensions
                 else:
-                    clusteringMethod = v3.get()
-                    master.switch_frame(NonInteractiveClusteringPage,dataSubsetTitle,clusteringMethod)
+                    master.switch_frame(NonInteractiveClusteringPage)
 
         buttonWindow = tk.Frame(self)
         buttonWindow.pack(side=tk.TOP,pady=10)
@@ -116,7 +143,110 @@ class ClusteringHomePage(tk.Frame):
         tk.Button(buttonWindow, text="Back",command=lambda: master.switch_frame(backpage,folderName,secondaryhomepage)).grid(row=5,column=1)
         tk.Button(buttonWindow, text="Quit",command=quit).grid(row=5,column=2)
 
-class NonInteractiveClusteringPage():
+class NonInteractiveClusteringPage(tk.Frame):
+    def __init__(self, master):
+        tk.Frame.__init__(self, master)
+        
+        mainWindow = tk.Frame(self)
+        mainWindow.pack(side=tk.TOP,padx=10,pady=10)
+
+        tk.Label(mainWindow,text='Adjust clustering hyperparameters:').pack()
+        sliderWindow = tk.Frame(mainWindow)
+        sliderWindow.pack()
+        sliderList = ipe.createParameterAdjustmentSliders(sliderWindow,ods.clusterParameterDict[clusteringMethod],ods.clusterParameterBoundsDict)
+        
+        dimRedBool = tk.BooleanVar()
+        cb = tk.Checkbutton(mainWindow,text='Create cluster-downsampled dimensional reduction?',variable=dimRedBool,pady=20)
+        cb.select() 
+        cb.pack()
+
+        def collectInputs():
+            #Do the clustering with slider value hyperparameters
+            parametersForClusteringFunction = ipe.getSliderValues(sliderList,ods.clusterParameterDict[clusteringMethod])
+            currentClusteringParameters = parametersForClusteringFunction.copy()
+            scaledData = pickle.load(open('outputData/analysisFiles/scaledData/'+dataSelectionFileName,'rb'))
+            clusterdf = ods.clusterData(scaledData,clusteringMethod,parametersForClusteringFunction) 
+            clusterdf.columns.name = 'Feature'
+            ods.savePostProcessedFile(clusterdf,dataSubsetTitle,'cluster',clusteringMethod,currentClusteringParameters)
+            #Switch to cluster based downsampling/dimensional reduction page
+            if dimRedBool.get():
+                clusteringTitle = ods.getFileName(dataSubsetTitle,'cluster',clusteringMethod,currentClusteringParameters)[0].split('.')[0]
+                print(clusteringTitle)
+                master.switch_frame(ClusterBasedDimRedPage,clusterdf,clusteringTitle)
+            else:
+                master.switch_frame(backpage,folderName,secondaryhomepage)    
+            
+        buttonWindow = tk.Frame(self)
+        buttonWindow.pack(side=tk.TOP,pady=10)
+
+        tk.Button(buttonWindow, text="OK",command=lambda: collectInputs()).grid(row=5,column=0)
+        tk.Button(buttonWindow, text="Back",command=lambda: master.switch_frame(ClusteringHomePage,folderName,secondaryhomepage,backpage)).grid(row=5,column=1)
+        tk.Button(buttonWindow, text="Quit",command=quit).grid(row=5,column=2)
+
+class ClusterBasedDimRedPage(tk.Frame):
+    def __init__(self, master,clusterdf,clusteringTitle):
+        tk.Frame.__init__(self, master)
+        
+        mainWindow = tk.Frame(self)
+        mainWindow.pack(side=tk.TOP,padx=10,pady=10)
+        
+        downsamplingWindow = tk.Frame(mainWindow)
+        downsamplingWindow.pack()
+        
+        tk.Label(downsamplingWindow,text='Downsample by:').grid(row=0,column=2)
+        sampleMethodVar = tk.StringVar(value='fraction')
+        sampleRbT1 = tk.Radiobutton(downsamplingWindow,text='fraction=',value='fraction',variable=sampleMethodVar)
+        sampleRbT1.grid(row=0,column=3,sticky=tk.W)
+        sampleRbT2 = tk.Radiobutton(downsamplingWindow,text='count=',value='count',variable=sampleMethodVar)
+        sampleRbT2.grid(row=1,column=3,sticky=tk.W)
+        fractionEntry = tk.Entry(downsamplingWindow)
+        fractionEntry.grid(row=0,column=4,sticky=tk.W)
+        fractionEntry.insert(tk.END, '0.1')
+        countEntry = tk.Entry(downsamplingWindow)
+        countEntry.grid(row=1,column=4,sticky=tk.W)
+        countEntry.insert(tk.END, '1000')
+
+        tk.Label(downsamplingWindow,text='across:').grid(row=0,column=5)
+        sampleTypeVar = tk.StringVar(value='all')
+        sampleRb1 = tk.Radiobutton(downsamplingWindow,text='all',value='all',variable=sampleTypeVar)
+        sampleRb1.grid(row=0,column=6,sticky=tk.W)
+        sampleRb2 = tk.Radiobutton(downsamplingWindow,text='perCluster',value='perCluster',variable=sampleTypeVar)
+        sampleRb2.grid(row=1,column=6,sticky=tk.W)
+        
+        dimRedWindow = tk.Frame(mainWindow)
+        dimRedWindow.pack()
+        
+        l2 = tk.Label(dimRedWindow, text="Dimensional Reduction Type: ").grid(row=1,column=0,sticky=tk.W,pady=(0,10))
+        v2 = tk.StringVar()
+        v2.set('umap')
+        rb2a = tk.Radiobutton(dimRedWindow,text="umap",padx = 20, variable=v2, value='umap')
+        rb2b = tk.Radiobutton(dimRedWindow,text="tsne",padx = 20, variable=v2, value='tsne')
+        rb2c = tk.Radiobutton(dimRedWindow,text="FItSNE",padx = 20, variable=v2, value='FItSNE')
+        rb2d = tk.Radiobutton(dimRedWindow,text="isomap",padx = 20, variable=v2, value='isomap')
+        rb2e = tk.Radiobutton(dimRedWindow,text="pca",padx = 20, variable=v2, value='pca')
+        rb2a.grid(row=1,column=1,sticky=tk.W)
+        rb2b.grid(row=2,column=1,sticky=tk.W)
+        rb2c.grid(row=3,column=1,sticky=tk.W)
+        rb2d.grid(row=4,column=1,sticky=tk.W)
+        rb2e.grid(row=5,column=1,sticky=tk.W)
+
+        def collectInputs():
+            sampledDf = sampleDataFrame(clusterdf,sampleMethodVar.get(),sampleTypeVar.get(),fraction=fractionEntry.get(),nmax=countEntry.get())
+            scaledData = sampledDf.droplevel('Cluster')
+            clusteredData = sampledDf.copy()
+            newTitle = clusteringTitle.split('-')[0]+'_clusterDownsampled'
+            newScaledTitle = '-'.join([newTitle]+dataSelectionFileName.split('-')[1:])
+            newClusteredTitle = '-'.join([newTitle]+clusteringTitle.split('-')[1:])
+            scaledData.to_pickle('outputData/analysisFiles/scaledData/'+newScaledTitle)
+            clusteredData.to_pickle('outputData/analysisFiles/clusteredData/'+newClusteredTitle)
+            master.switch_frame(InteractiveDimensionReductionPage,scaledData,newClusteredTitle,v2.get(),[])
+        
+        buttonWindow = tk.Frame(self)
+        buttonWindow.pack(side=tk.TOP,pady=10)
+            
+        tk.Button(buttonWindow, text="OK",command=lambda: collectInputs()).grid(row=5,column=0)
+        tk.Button(buttonWindow, text="Back",command=lambda: master.switch_frame(NonInteractiveClusteringPage)).grid(row=5,column=1)
+        tk.Button(buttonWindow, text="Quit",command=quit).grid(row=5,column=2)
 
 class InteractiveClusteringPage(tk.Frame):
     def __init__(self, master,scaledData,reducedData,dataSubsetTitle,clusteringMethod):

@@ -299,6 +299,11 @@ class InteractiveDimensionReductionPage(tk.Frame):
         #Default save and quit buttons
         buttonWindow = tk.Frame(self)
         buttonWindow.grid(row=6,column=0,columnspan=2)
+        try:
+            k=backpage
+        except NameError: 
+            backpage,folderName,secondaryhomepage = pickle.load(open('misc/dimRedPlottingParamList.pkl','rb'))
+            
         tk.Button(buttonWindow, text="OK",command=lambda: master.switch_frame(backpage,folderName,secondaryhomepage)).grid(row=0,column=0)
         tk.Button(buttonWindow, text="Back",command=lambda: master.switch_frame(DimensionReductionHomePage,folderName,backpage,secondaryhomepage)).grid(row=0,column=1)
         tk.Button(buttonWindow, text="Quit",command=lambda: quit()).grid(row=0,column=2)

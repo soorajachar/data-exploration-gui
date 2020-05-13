@@ -49,6 +49,8 @@ class AnalysisStartPage(tk.Frame):
 
         def collectInputs():
             postProcessType = postProcessTypeVar.get()
+            with open('misc/dimRedPlottingParamList.pkl','wb') as f:
+                pickle.dump([AnalysisStartPage,folderName,mainhomepage],f)
             if postProcessType == 'subset':
                 master.switch_frame(DataSelectionHomePage,AnalysisStartPage,folderName,AnalysisStartPage,'cluster',mainhomepage)
             elif postProcessType == 'dr':

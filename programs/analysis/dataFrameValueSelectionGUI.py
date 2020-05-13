@@ -44,17 +44,24 @@ def sampleDataFrame(df,sampleType,sampleSubset,fraction='',nmax=''):
     #whole dataframe
     if sampleSubset == 'all':
         if sampleType == 'fraction':
-            sampledDf = df.sample(frac=float(fraction))
+            if float(fraction) == 1.0:
+                sampledDf = df.copy()
+            else:
+                sampledDf = df.sample(frac=float(fraction))
         else:
             sampledDf = df.sample(n=int(nmax))
     #per condition
     else:
         grouped = df.groupby(list(df.index.names)[:-1])
         if sampleType == 'fraction':
-            sampledDf = grouped.apply(lambda x: x.sample(frac=float(fraction)))
+            if float(fraction) == 1.0:
+                sampledDf = df.copy()
+            else:
+                sampledDf = grouped.apply(lambda x: x.sample(frac=float(fraction)))
+                sampledDf = sampledDf.droplevel(list(range(len(df.index.names)-1)),axis=0)
         else:
             sampledDf = grouped.apply(lambda x: x.sample(int(nmax)) if len(x) > int(nmax) else x)
-        sampledDf = sampledDf.droplevel(list(range(len(df.index.names)-1)),axis=0)
+            sampledDf = sampledDf.droplevel(list(range(len(df.index.names)-1)),axis=0)
     return sampledDf
 
 #(DataSelectionHomePage,AnalysisStartPage,folderName,AnalysisStartPage,'cluster',mainhomepage)
