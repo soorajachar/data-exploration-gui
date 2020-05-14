@@ -13,23 +13,25 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import Isomap
 from sklearn.manifold import TSNE
 from fitsne import FItSNE
+from HierarchicalClustering import UHAL
 from umap import UMAP
 from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering
 import phenograph
 import clusterPlottingLibrary as cpl
-from HierarchicalClustering import UHAL
 import parc
 
 #Postprocessing attributes currently implemented
 scalingFunctionDict = {'minmax':MinMaxScaler,'maxabs':MaxAbsScaler,'standard':StandardScaler,'robust':RobustScaler}
 
 dimReductionFunctionDict = {'umap':UMAP,'tsne':TSNE,'FItSNE':FItSNE,'isomap':Isomap,'pca':PCA}
+#dimReductionFunctionDict = {'umap':UMAP,'tsne':TSNE,'FItSNE':TSNE,'isomap':Isomap,'pca':PCA}
 dimReductionNumericParameterDict = {'umap':['n_neighbors','min_dist'],'tsne':['perplexity'],'FItSNE':['perplexity'],'isomap':['n_neighbors'],'pca':[]}
 dimReductionNumericParameterBounds = {'n_neighbors':[2,100,1,15],'min_dist':[0,1,0.05,0.1],'perplexity':[5,50,1,30]}
 dimReductionQualitativeParameterDict = {'umap':['metric'],'tsne':['method'],'FItSNE':[],'isomap':[]}
 dimReductionQualitativeParameterValues = {'method':['barnes_hut','exact'],'metric':['euclidean','manhattan','chebyshev','minkowski']}
 
 clusteringFunctionDict = {'k-means':KMeans,'db-scan':DBSCAN,'hierarchical':AgglomerativeClustering,'phenograph':phenograph.cluster,'halx':UHAL,'parc':[]}
+#clusteringFunctionDict = {'k-means':KMeans,'db-scan':DBSCAN,'hierarchical':AgglomerativeClustering,'phenograph':phenograph.cluster,'halx':[],'parc':[]}
 clusterParameterDict = {'k-means':['n_clusters'],'db-scan':['eps'],'hierarchical':['n_clusters','distance_threshold'],'phenograph':['k'],'halx':['cv'],'parc':['dist_std_local','resolution_parameter']}
 #lower, upper, scale, default
 clusterParameterBoundsDict = {'n_clusters':[0,20,1,2],'eps':[0,5,0.05,0.5],'distance_threshold':[0,20,0.2,0],'k':[2,100,2,30],'cv':[0.6,1.0,0.05,0.8],'dist_std_local':[1,10,1,2],'resolution_parameter':[1,10,1,1]}

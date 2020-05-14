@@ -43,7 +43,7 @@ def sampleDataFrame(df,sampleType,sampleSubset,fraction='',nmax=''):
             sampledDf = df.sample(n=int(nmax))
     #per condition
     else:
-        grouped = df.groupby(list(df.index.names)[:-1])
+        grouped = df.groupby(list(df.index.names)[:-2])
         if sampleType == 'fraction':
             if float(fraction) == 1.0:
                 sampledDf = df.copy()
