@@ -107,4 +107,10 @@ def createClusterFrequencyDataframe(datasetName,df):
     if 'clusterFrequencyData' not in os.listdir('outputData/analysisFiles/'):
         subprocess.run(['mkdir','outputData/analysisFiles/clusterFrequencyData'])
     
+    writer = pd.ExcelWriter('outputData/excelFiles/excelFile-'+folderName+'-clusterFrequency-'+datasetName+'.xlsx')
+    for statistic in list(pd.unique(frequencydf.index.get_level_values('Statistic'))):
+        statisticDf = frequencydf.xs(statistic,level='Statistic')
+        statisticDf.to_excel(writer,statistic)
+    writer.save()
+
     frequencydf.to_pickle('outputData/analysisFiles/clusterFrequencyData/clusterFrequency-'+datasetName+'.pkl')
