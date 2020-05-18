@@ -18,6 +18,7 @@ def produceSingleCellHeaders(cellTypes):
         newMultiIndexList.append([cellType])
     return newMultiIndexList
 
+
 def createTubeSingleCellDataFrame(folderName,fileNameDf):
     fileNameDf = fileNameDf.stack()
     dflist = []
@@ -25,6 +26,36 @@ def createTubeSingleCellDataFrame(folderName,fileNameDf):
     k = os.listdir('inputData/singleCellCSVFiles/')
     dirList = [x[0].split('/')[2] for x in os.walk('inputData/singleCellCSVFiles/')]
     if len(dirList)-1 > 0:
+        #Find markers common to all fcs files
+        allMarkers = []
+        for cellType in dirList[1:]:
+            scalingTypeList = os.listdir('inputData/singleCellCSVFiles/'+cellType+'/')
+            if '.csv' not in scalingTypeList[0]:
+                scalingType = scalingTypeList[1].split('_')[0]
+            else:
+                scalingType = scalingTypeList[0].split('_')[0]
+            for row in range(fileNameDf.shape[0]):
+                fileName = fileNameDf.iloc[row].split('.')[0]
+                possibleScale = fileName.split('_')
+                if possibleScale[0] == scalingType:
+                    tempScalingType = ''
+                else:
+                    tempScalingType = scalingType+'_'
+                csv = pd.read_csv('inputData/singleCellCSVFiles/'+cellType+'/'+tempScalingType+fileName+'_'+cellType+'.csv')
+                newcolumns = []
+                for i,column in enumerate(csv.columns):
+                    if 'FSC' in column:
+                        newcolumns.append('Size')
+                    elif 'SSC' in column:
+                        newcolumns.append('Granularity')
+                    else:
+                        if ' :: ' in column:
+                            newcolumns.append(column.split(' :: ')[1])
+                        else:
+                            newcolumns.append(column)
+                allMarkers.append(newcolumns)
+        commonMarkers = list(set.intersection(*map(set,allMarkers)))
+
         for cellType in dirList[1:]:
             scalingTypeList = os.listdir('inputData/singleCellCSVFiles/'+cellType+'/')
             if '.csv' not in scalingTypeList[0]:
@@ -55,9 +86,13 @@ def createTubeSingleCellDataFrame(folderName,fileNameDf):
                     indexTuple.append([cellType]+list(fileNameDf.index.tolist()[row])+[row2+1])
                 mi = pd.MultiIndex.from_tuples(indexTuple,names=['CellType']+list(fileNameDf.index.names)+['Event'])
                 newdf = pd.DataFrame(csv.values,index=mi,columns=newcolumns)
-                dflist.append(newdf)
+                #Subset by common markers
+                commonMarkerDf = newdf.loc[:,commonMarkers]
+                dflist.append(commonMarkerDf)
     #Only one celltype/celltype doesn't matter
     else:
+        #Find markers common to all fcs files
+        allMarkers = []
         cellType = 'allCells'
         scalingTypeList = os.listdir('inputData/singleCellCSVFiles/')
         if '.csv' not in scalingTypeList[0]:
@@ -83,12 +118,36 @@ def createTubeSingleCellDataFrame(folderName,fileNameDf):
                         newcolumns.append(column.split(' :: ')[1])
                     else:
                         newcolumns.append(column)
+            allMarkers.append(newcolumns)
+        commonMarkers = list(set.intersection(*map(set,allMarkers)))
+
+        for row in range(fileNameDf.shape[0]):
+            fileName = fileNameDf.iloc[row].split('.')[0]
+            possibleScale = fileName.split('_')
+            if possibleScale[0] == scalingType:
+                tempScalingType = ''
+            else:
+                tempScalingType = scalingType+'_'
+            csv = pd.read_csv('inputData/singleCellCSVFiles/'+tempScalingType+fileName+'.csv')
+            newcolumns = []
+            for i,column in enumerate(csv.columns):
+                if 'FSC' in column:
+                    newcolumns.append('Size')
+                elif 'SSC' in column:
+                    newcolumns.append('Granularity')
+                else:
+                    if ' :: ' in column:
+                        newcolumns.append(column.split(' :: ')[1])
+                    else:
+                        newcolumns.append(column)
             indexTuple = []
             for row2 in range(csv.shape[0]):
                 indexTuple.append([cellType]+list(fileNameDf.index.tolist()[row])+[row2+1])
             mi = pd.MultiIndex.from_tuples(indexTuple,names=['CellType']+list(fileNameDf.index.names)+['Event'])
             newdf = pd.DataFrame(csv.values,index=mi,columns=newcolumns)
-            dflist.append(newdf)
+            commonMarkerDf = newdf.loc[:,commonMarkers]
+            dflist.append(commonMarkerDf)
+    
     completeDataFrame = pd.concat(dflist,axis=0)
     completeDataFrame.columns.name = 'Marker'
     print(completeDataFrame)

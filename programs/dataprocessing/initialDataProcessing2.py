@@ -159,62 +159,54 @@ def demultiplexSingleCellData(experimentParameters):
 
 def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataType,layoutDict):
     if experimentParameters['format'] == 'tube':
-        fullFormatDf = pickle.load(open('misc/tubeLayout-'+folderName+'-cell.pkl','rb'))
-        dfList = []
+        rowMultiIndex = pickle.load(open('misc/tubeLayout-'+folderName+'-cell.pkl','rb')).index
         for fileName in os.listdir('inputData/bulkCSVFiles/'):
             if '.csv' in fileName:
                 bulkTubeCSVFileName = fileName
-                columnMultiIndexTuples = cellDataProcessing.parseCellCSVHeaders(pd.read_csv('inputData/bulkCSVFiles/'+bulkTubeCSVFileName).columns)
-                columnMultiIndex = pd.MultiIndex.from_tuples(columnMultiIndexTuples,names=['CellType','Marker','Statistic'])
+        columnMultiIndexTuples = cellDataProcessing.parseCellCSVHeaders(pd.read_csv('inputData/bulkCSVFiles/'+bulkTubeCSVFileName).columns)
+        columnMultiIndex = pd.MultiIndex.from_tuples(columnMultiIndexTuples,names=['CellType','Marker','Statistic'])
 
-                fullData = pd.read_csv('inputData/bulkCSVFiles/'+bulkTubeCSVFileName,header=0)
-                if 'Unnamed' in fullData.columns[-1]:
-                    data = fullData.iloc[:-2,1:-1].values
-                else:
-                    data = fullData.iloc[:-2,1:].values
-                sampleNames = fullData.iloc[:-2,0].values.ravel()
-                sampleIndexStart = fullFormatDf.values.ravel().tolist().index(sampleNames[0])
-                sampleIndexEnd = fullFormatDf.values.ravel().tolist().index(sampleNames[-1])
-                rowMultiIndex = fullFormatDf.iloc[sampleIndexStart:sampleIndexEnd+1,:].index
-                
-                timeDataList = []
-                timeSubsets = []
-                times = experimentParameters['columnLevelValues']
+        data = pd.read_csv('inputData/bulkCSVFiles/'+bulkTubeCSVFileName,header=0)
+        if 'Unnamed' in data.columns[-1]:
+            data = data.iloc[:-2,1:-1].values
+        else:
+            data = data.iloc[:-2,1:].values
+        
+        timeDataList = []
+        timeSubsets = []
+        times = experimentParameters['columnLevelValues']
 
-                #Can use sample name file to assign time values
-                if 'sampleNameFile.xlsx' in os.listdir('misc') or 'sampleNameFile.csv' in os.listdir('misc'):
-                    if 'sampleNameFile.xlsx' in os.listdir('misc'): 
-                        sampleNameDf = pd.read_excel('misc/sampleNameFile.xlsx')
-                    else:
-                        sampleNameDf = pd.read_csv('misc/sampleNameFile.csv')
-                    if 'Time' in sampleNameDf.columns:
-                        for time in times:
-                            timeIndices = []
-                            for row in range(sampleNameDf.shape[0]):
-                                if sampleNameDf[experimentParameters['columnVariableName']].values[row] == time:
-                                    timeIndices.append(row)
-                            timeSubsets.append(timeIndices)
-                    #Otherwise just assume 1 timepoint (HACK NEED TO FIX EVENTUALLY)
-                    else:
-                        timeSubsets.append(list(range(data.shape[0])))
-                #Otherwise just assume 1 timepoint (HACK NEED TO FIX EVENTUALLY)
-                else:
-                    timeSubsets.append(list(range(data.shape[0])))
+        #Can use sample name file to assign time values
+        if 'sampleNameFile.xlsx' in os.listdir('misc') or 'sampleNameFile.csv' in os.listdir('misc'):
+            if 'sampleNameFile.xlsx' in os.listdir('misc'): 
+                sampleNameDf = pd.read_excel('misc/sampleNameFile.xlsx')
+            else:
+                sampleNameDf = pd.read_csv('misc/sampleNameFile.csv')
+            if 'Time' in sampleNameDf.columns:
+                for time in times:
+                    timeIndices = []
+                    for row in range(sampleNameDf.shape[0]):
+                        if sampleNameDf[experimentParameters['columnVariableName']].values[row] == time:
+                            timeIndices.append(row)
+                    timeSubsets.append(timeIndices)
+            #Otherwise just assume 1 timepoint (HACK NEED TO FIX EVENTUALLY)
+            else:
+                timeSubsets.append(list(range(data.shape[0])))
+        #Otherwise just assume 1 timepoint (HACK NEED TO FIX EVENTUALLY)
+        else:
+            timeSubsets.append(list(range(data.shape[0])))
 
-                for timeSubset in timeSubsets: 
-                    dataList = []
-                    columnTupleList = []
-                    for i,columnTuple in enumerate(columnMultiIndexTuples):
-                        ser = pd.Series(data[timeSubset,i],index=rowMultiIndex)
-                        dataList.append(ser)
-                        columnTupleList.append(tuple(columnTuple))
-                    fullExperimentDf = pd.concat(dataList,keys=columnTupleList,names=['CellType','Marker','Statistic'])
-                    timeDataList.append(fullExperimentDf)
+        for timeSubset in timeSubsets: 
+            dataList = []
+            columnTupleList = []
+            for i,columnTuple in enumerate(columnMultiIndexTuples):
+                ser = pd.Series(data[timeSubset,i],index=rowMultiIndex)
+                dataList.append(ser)
+                columnTupleList.append(tuple(columnTuple))
+            fullExperimentDf = pd.concat(dataList,keys=columnTupleList,names=['CellType','Marker','Statistic'])
+            timeDataList.append(fullExperimentDf)
 
-                partialExperimentDf = pd.concat(timeDataList,keys=times,names=[experimentParameters['columnVariableName']]).unstack(experimentParameters['columnVariableName'])
-                dfList.append(partialExperimentDf)
-
-        fullExperimentDf = pd.concat(dfList)
+        fullExperimentDf = pd.concat(timeDataList,keys=times,names=[experimentParameters['columnVariableName']]).unstack(experimentParameters['columnVariableName'])
     else:
         if dataType == 'singlecell':
             realDataType = 'singlecell'
