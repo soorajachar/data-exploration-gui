@@ -210,7 +210,15 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
                         columnTupleList.append(tuple(columnTuple))
                     fullExperimentDf = pd.concat(dataList,keys=columnTupleList,names=['CellType','Marker','Statistic'])
                     timeDataList.append(fullExperimentDf)
-
+                
+                k = pd.concat(timeDataList,keys=times,names=[experimentParameters['columnVariableName']])
+                repeatList = []
+                for name in k.index:
+                    if name not in repeatList:
+                        repeatList.append(name)
+                    else:
+                        print('Repeated:')
+                        print(name)
                 partialExperimentDf = pd.concat(timeDataList,keys=times,names=[experimentParameters['columnVariableName']]).unstack(experimentParameters['columnVariableName'])
                 dfList.append(partialExperimentDf)
 

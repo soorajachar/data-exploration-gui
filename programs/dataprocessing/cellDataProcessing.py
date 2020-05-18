@@ -134,7 +134,6 @@ def parseCellCSVHeaders(columns,panelData=[]):
     newMultiIndexList = []
     for column in columns:
         if 'Unnamed' not in column:
-            print(column)
             populationNameVsStatisticSplit = column.split(' | ')
             fullPopulationName = populationNameVsStatisticSplit[0]
             #Statistics can be performed on the whole cell population, in which case the cellType is allEvents
@@ -142,7 +141,7 @@ def parseCellCSVHeaders(columns,panelData=[]):
             if '/' in fullPopulationName:
                 populationDivisionIndices = [i for i,c in enumerate(fullPopulationName) if c=='/']
                 #MFI or CV
-                print(populationNameVsStatisticSplit[1])
+                #print(populationNameVsStatisticSplit[1])
                 if 'Mean' in populationNameVsStatisticSplit[1] or 'Median' in populationNameVsStatisticSplit[1] or 'CV' in populationNameVsStatisticSplit[1]:
                     cellType = fullPopulationName
                     #cellType = fullPopulationName[populationDivisionIndices[-1]+1:]
@@ -151,7 +150,7 @@ def parseCellCSVHeaders(columns,panelData=[]):
                     else:
                         statisticVsChannelSplit = populationNameVsStatisticSplit[1].split(' (')
                     statistic = statisticVsChannelSplit[0]
-                    print(statistic)
+                    #print(statistic)
                     if 'Mean' in statistic:
                         statisticName = 'MFI'
                     elif 'Median' in statistic:
@@ -211,7 +210,8 @@ def parseCellCSVHeaders(columns,panelData=[]):
                         if numPositive+numNegative == 0:
                             marker = 'NotApplicable'
                             statistic ='%'
-                            cellType = fullPopulationName[populationDivisionIndices[-1]+1:]
+                            #cellType = fullPopulationName[populationDivisionIndices[-1]+1:]
+                            cellType = fullPopulationName
                         elif numPositive+numNegative > 1:
                             marker = 'NotApplicable'
                             statistic = '%'
@@ -264,7 +264,10 @@ def parseCellCSVHeaders(columns,panelData=[]):
                         statistic = '% Positive'
                     else:
                         statistic = 'Count'
+            print(column)
+            print([cellType,marker,statistic])
             newMultiIndexList.append([cellType,marker,statistic])
+    
     commonBranchesIndices = []
     commonBranches = []
     for multiIndexList in newMultiIndexList:
