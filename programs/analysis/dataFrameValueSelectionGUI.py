@@ -134,12 +134,12 @@ class DataSelectionHomePage(tk.Frame):
                     newdf = pd.read_hdf(newname, 'df')
                     dataTypeDfDict['singlecell'] = newdf
                 else:
-                    dataTypeDfDict['singlecell'] = pickle.load(open('outputData/pickleFiles/'+dataTypeFileDict['singlecell'],'rb'))
+                    dataTypeDfDict['singlecell'] = pd.read_pickle('outputData/pickleFiles/'+dataTypeFileDict['singlecell'])
                 dataTypeDfDict['singlecell'] = sampleDataFrame(dataTypeDfDict['singlecell'],sampleMethodVar.get(),sampleTypeVar.get(),fraction=fractionEntry.get(),nmax=countEntry.get())
             else:
                 for checkButtonVariable,dataType in zip(checkButtonVariableList,dataTypeFileDict):
                     if checkButtonVariable.get():
-                        dataTypeDfDict[dataType] = pickle.load(open('outputData/pickleFiles/'+dataTypeFileDict[dataType],'rb'))
+                        dataTypeDfDict[dataType] = pd.read_pickle('outputData/pickleFiles/'+dataTypeFileDict[dataType])
                 #print(dataTypeDfDict['cell'].loc[idx[:,:,'MFI'],:])
             
             global trueLabelDict
