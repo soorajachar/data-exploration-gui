@@ -742,9 +742,27 @@ class PlateLayoutPage(tk.Frame):
                 finalLayoutDict['blank'] = blankMatrix
                 finalLayoutDict['keys'] = levelValueDict
                 
-                print(finalLayoutDict['blank'])
-                print(finalLayoutDict['keys'])
-                
+                keyList = []
+                for key in finalLayoutDict['keys']:
+                    keyList.append(finalLayoutDict['keys'][key])
+
+                fullLayout = np.dstack(keyList)
+
+                uniqueKeys = []
+                nonUniquePositions = []
+                for row in range(fullLayout.shape[0]):
+                    for col in range(fullLayout.shape[1]):
+                        wellKeys = fullLayout[row,col,:].tolist()
+                        if 'blank' not in wellKeys:
+                            if wellKeys not in uniqueKeys:
+                                uniqueKeys.append(wellKeys)
+                            else:
+                                plateID = finalLayoutDict['plateID'][row,col]
+                                wellID = finalLayoutDict['wellID'][row,col]
+                                nonUniquePositions.append(plateID+'/'+wellID)
+                print('NON UNIQUE POSITIONS')
+                print(nonUniquePositions)
+
                 if dataType == 'both':
                     dataTypes = ['cell','cyt']
                 else:

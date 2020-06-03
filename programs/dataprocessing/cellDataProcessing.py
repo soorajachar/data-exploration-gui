@@ -238,21 +238,27 @@ def parseCellCSVHeaders(columns,panelData=[]):
                         else:
                             cellType = fullPopulationName
             else:
-                cellType = 'allEvents'
                 #Statistics can be performed on the whole cell population, in which case the cellType is allEvents
                 #DAPI+ | Freq. of Parent (%)
                 #Positive cell percentage statistics do not have channel names, so treat differently
                 #MFI or CV
                 if len(populationNameVsStatisticSplit) == 1:
+                    cellType = 'allEvents'
                     populationNameVsStatisticSplit = [' ',populationNameVsStatisticSplit[0]]
-                if 'Geometric Mean' in populationNameVsStatisticSplit[1] or 'CV' in populationNameVsStatisticSplit[1]:
+                else:
+                    cellType = populationNameVsStatisticSplit[0]
+                if 'Mean' in populationNameVsStatisticSplit[1] or 'Median' in populationNameVsStatisticSplit[1] or 'CV' in populationNameVsStatisticSplit[1]:
                     if 'Comp-' in populationNameVsStatisticSplit[1]:
                         statisticVsChannelSplit = populationNameVsStatisticSplit[1].split(' (Comp-')
                     else:
                         statisticVsChannelSplit = populationNameVsStatisticSplit[1].split(' (')
                     statistic = statisticVsChannelSplit[0]
-                    if 'Geometric' in statistic:
+                    if 'Mean' in statistic:
                         statistic = 'MFI'
+                    elif 'Median' in statistic:
+                        statistic = 'MedianFI'
+                    else:
+                        statistic = 'CV'
                     channel = statisticVsChannelSplit[1][:-1]
                     marker = channel
                     #panelIndex = list(panelData['FCSDetectorName']).index(channel)

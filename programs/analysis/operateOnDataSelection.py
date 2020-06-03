@@ -226,11 +226,12 @@ def clusterData(scaledDf,clusteringMethod,clusteringParameters):
             clusteringParameters['n_clusters'] = None
         cluster_labels = clusterFunc(**clusteringParameters).fit_predict(scaledDf)
     
-    tupleList = []
-    for row in range(scaledDf.shape[0]):
-        names = list(scaledDf.iloc[row,:].name)
-        tupleList.append(names+[str(cluster_labels[row])])
-    clusteredMultiIndex = pd.MultiIndex.from_tuples(tupleList,names=list(scaledDf.index.names)+['Cluster'])
-    clusteredDf = pd.DataFrame(scaledDf.values,index=clusteredMultiIndex,columns=scaledDf.columns) 
-    
+    #tupleList = []
+    #for row in range(scaledDf.shape[0]):
+    #    names = list(scaledDf.iloc[row,:].name)
+    #    tupleList.append(names+[str(cluster_labels[row])])
+    #clusteredMultiIndex = pd.MultiIndex.from_tuples(tupleList,names=list(scaledDf.index.names)+['Cluster'])
+    #clusteredDf = pd.DataFrame(scaledDf.values,index=clusteredMultiIndex,columns=scaledDf.columns) 
+    clusteredDf = scaledDf.assign(Cluster=cluster_labels).set_index('Cluster', append=True)
+
     return clusteredDf

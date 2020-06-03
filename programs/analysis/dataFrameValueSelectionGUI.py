@@ -91,6 +91,7 @@ class DataSelectionHomePage(tk.Frame):
             if dataTypeFileDict[dataType] not in os.listdir('outputData/pickleFiles'):
                 print(os.listdir('outputData/pickleFiles'))
                 print(dataTypeFileDict[dataType].split('.'))
+                print('waaaaaaaaaaaat')
                 if dataTypeFileDict[dataType].split('.')[0]+'.h5' not in os.listdir('outputData/pickleFiles'):
                     cb.config(state=tk.DISABLED)
             else:
