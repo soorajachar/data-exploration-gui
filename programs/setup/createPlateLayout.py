@@ -226,7 +226,7 @@ class BlankSelectionPage(tk.Frame):
         buttonWindow = tk.Frame(self)
         buttonWindow.grid(row=6,column=0)
         
-        tk.Button(buttonWindow, text="OK",command=lambda: collectInputs()).grid(row=0,column=0)
+        tk.Button(buttonWindow, text="OK",command=lambda: collectInputs(),font='Helvetica 14 bold').grid(row=0,column=0)
         tk.Button(buttonWindow, text="Back",command=lambda: master.switch_frame(secondaryhomepage,folderName,bPage)).grid(row=0,column=1)
         tk.Button(buttonWindow, text="Quit",command=lambda: quit()).grid(row=0,column=2)
 
@@ -315,18 +315,8 @@ class PlateLayoutPage(tk.Frame):
 
         #baseLayoutDf,infoDf,vlinelist,hlinelist = returnBaseLayout([16,24],2,2)
         baseLayoutDf,infoDf,vlinelist,hlinelist = returnBaseLayout(plateDimensions,numRowPlates,numColumnPlates)
-        print(baseLayoutDf)
-        print(infoDf)
         baseLayoutDf['blank'] = blankWells
         
-        print(blankWells)
-        print(levels)
-        print(levelValues)
-        print(maxNumLevelValues)
-        print(numRowPlates)
-        print(numColumnPlates)
-        print(plateDimensions)
-
         blankMatrix = np.matrix(np.reshape(baseLayoutDf['blank'].values,(plateDimensions[0]*numRowPlates,plateDimensions[1]*numColumnPlates)))
         self.blankRowsToDisregard = []
         self.blankColumnsToDisregard = []
@@ -418,8 +408,18 @@ class PlateLayoutPage(tk.Frame):
                 self.levelValueIndex += 1
             else:
                 self.levelValueIndex -= 1
+            
+            if self.levelValueIndex == len(levelValues[self.levelIndex])-1:
+                self.nextLevelValueButton['state'] = 'disabled'
+            else:
+                self.nextLevelValueButton['state'] = 'normal'
+            if self.levelValueIndex == 0:
+                self.previousLevelValueButton['state'] = 'disabled'
+            else:
+                self.previousLevelValueButton['state'] = 'normal'
+            
             self.levelValueIndex = max([0,self.levelValueIndex])
-            self.levelValueIndex = min([maxNumLevelValues-1,self.levelValueIndex])
+            self.levelValueIndex = min([len(levelValues[self.levelIndex])-1,self.levelValueIndex])
             
             changeLevelValueInLevelValueLabelList()
             rectpropsdict = {'facecolor':self.currentpalette[self.levelValueIndex+1],'alpha':0.2,'edgecolor':self.currentpalette[self.levelValueIndex+1]}
@@ -438,8 +438,6 @@ class PlateLayoutPage(tk.Frame):
                 if i in list(pd.unique(self.currentLayout['key'])):
                     hueorder.append(i)
                     modifiedPalette.append(self.currentpalette[i+1])
-            print(modifiedPalette)
-            print(hueorder)
             g1 = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,hue='key',hue_order=hueorder,palette=modifiedPalette,s=200,markers=['o','X'],alpha=0.5,style='blank',style_order=[-1,0])
             fig_ax1.legend_.remove()
             #g1 = sns.scatterplot(data=baseLayoutDf,x='x',y='y',ax=fig_ax1,color='#808080',s=200,marker='o',alpha=0.5)
@@ -452,7 +450,22 @@ class PlateLayoutPage(tk.Frame):
                 self.levelIndex+=1
             else:
                 self.levelIndex-=1
-            #self.levelIndex = max([0,self.levelIndex])
+            
+            if self.levelIndex == len(levels)-1:
+                self.FinishButton['state'] = 'normal'
+                self.nextLevelButton['state'] = 'disabled'
+            else:
+                self.FinishButton['state'] = 'disabled'
+                self.nextLevelButton['state'] = 'normal'
+            if self.levelIndex == 0:
+                self.previousLevelButton['state'] = 'disabled'
+            else:
+                self.previousLevelButton['state'] = 'normal'
+            
+            self.nextLevelValueButton['state'] = 'normal'
+            self.previousLevelValueButton['state'] = 'disabled'
+            
+            self.levelIndex = max([0,self.levelIndex])
             self.levelIndex = min([len(levels)-1,self.levelIndex])
             
             self.currentLayout = self.allLayouts[self.levelIndex].copy()
@@ -470,27 +483,30 @@ class PlateLayoutPage(tk.Frame):
         
         levelTitle = tk.Label(levelLabelWindow,text='Level: ')
         levelTitle.grid(row=0,column=0,sticky=tk.W)
-        levelTitle.configure(font='Helvetica 16')
+        levelTitle.configure(font='Helvetica 18 bold')
         self.levelLabelList = []
         for i,level in enumerate(levels):
             currentlabel = tk.Label(levelLabelWindow,text=level)
             if i == self.levelIndex:
-                currentlabel.configure(font='Helvetica 18 bold')
+                currentlabel.configure(font='Helvetica 18',borderwidth=2, relief="solid")
             else:
-                currentlabel.configure(font='Helvetica 18')
-            currentlabel.grid(row=0,column=i+1,sticky=tk.W)
+                currentlabel.configure(font='Helvetica 18',borderwidth=0, relief="solid")
+            currentlabel.grid(row=0,column=i+1,sticky=tk.W, padx=2)
             self.levelLabelList.append(currentlabel)
         
         def changeLevelInLevelLabelList():
             for i,level in enumerate(levels):
                 currentlabel = self.levelLabelList[i]
                 if i == self.levelIndex:
-                    currentlabel.configure(font='Helvetica 18 bold')
+                    currentlabel.configure(font='Helvetica 18',borderwidth=2, relief="solid")
                 else:
-                    currentlabel.configure(font='Helvetica 18')
+                    currentlabel.configure(font='Helvetica 18',borderwidth=0, relief="solid")
         
-        tk.Button(levelLabelWindow, text="Previous",command=lambda: changeLevel(False)).grid(row=0,column=len(levels)+1,sticky=tk.W)
-        tk.Button(levelLabelWindow, text="Next",command=lambda: changeLevel(True)).grid(row=0,column=len(levels)+2,sticky=tk.W)
+        self.previousLevelButton = tk.Button(levelLabelWindow, text="Previous",command=lambda: changeLevel(False))
+        self.previousLevelButton.grid(row=0,column=len(levels)+1,sticky=tk.W)
+        self.previousLevelButton['state'] = 'disabled'
+        self.nextLevelButton = tk.Button(levelLabelWindow, text="Next",command=lambda: changeLevel(True))
+        self.nextLevelButton.grid(row=0,column=len(levels)+2,sticky=tk.W)
 
         #Level value labels
         levelValueLabelWindow = tk.Frame(self)
@@ -498,7 +514,7 @@ class PlateLayoutPage(tk.Frame):
 
         levelValueTitle = tk.Label(levelValueLabelWindow,text='Level Value: ')
         levelValueTitle.grid(row=0,column=0,sticky=tk.W+tk.E)
-        levelValueTitle.configure(font='Helvetica 16')
+        levelValueTitle.configure(font='Helvetica 18 bold')
         #Need to create maxNumLevelValue labels; only fill in appropriate labels for current level
         self.levelValueLabelList = []
         maxNumLevelValues = len(max(levelValues,key=len))
@@ -518,13 +534,13 @@ class PlateLayoutPage(tk.Frame):
                 levelValue = levelValues[self.levelIndex][j]
                 currentlabel = tk.Label(levelValueLabelWindow,text=levelValue,fg = self.currentpalette[j+1])
                 if j == self.levelValueIndex:
-                    currentlabel.configure(font='Helvetica 18 bold')
+                    currentlabel.configure(font='Helvetica 18',borderwidth=2, relief="solid")
                 else:
-                    currentlabel.configure(font='Helvetica 18')
+                    currentlabel.configure(font='Helvetica 18',borderwidth=0, relief="solid")
                 j+=1
             else:
                 currentlabel = tk.Label(levelValueLabelWindow,text=self.blanktext)
-            currentlabel.grid(row=0,column=i+1,sticky=tk.W+tk.E)
+            currentlabel.grid(row=0,column=i+1,sticky=tk.W+tk.E,padx=2)
             self.levelValueLabelList.append(currentlabel)
         
         def changeLevelValueInLevelValueLabelList():
@@ -534,14 +550,20 @@ class PlateLayoutPage(tk.Frame):
             for i in range(maxNumLevelValues):
                 currentlabel = self.levelValueLabelList[i]
                 if i in currentLabelIndexList:
-                    if j == self.levelValueIndex:
-                        currentlabel.configure(font='Helvetica 18 bold')
+                    if currentlabel['text'] != self.blanktext:
+                        if j == self.levelValueIndex:
+                            currentlabel.configure(font='Helvetica 18',borderwidth=2, relief="solid")
+                        else:
+                            currentlabel.configure(font='Helvetica 18',borderwidth=0, relief="solid")
                     else:
-                        currentlabel.configure(font='Helvetica 18')
+                        currentlabel.configure(font='Helvetica 18',borderwidth=0, relief="solid")
                     j+=1
 
-        tk.Button(levelValueLabelWindow, text="Previous",command=lambda: changeLevelValue(False)).grid(row=0,column=maxNumLevelValues+1,sticky=tk.W)
-        tk.Button(levelValueLabelWindow, text="Next",command=lambda: changeLevelValue(True)).grid(row=0,column=maxNumLevelValues+2,sticky=tk.W)
+        self.previousLevelValueButton = tk.Button(levelValueLabelWindow, text="Previous",command=lambda: changeLevelValue(False))
+        self.previousLevelValueButton.grid(row=0,column=maxNumLevelValues+1,sticky=tk.W)
+        self.previousLevelValueButton['state'] = 'disabled'
+        self.nextLevelValueButton = tk.Button(levelValueLabelWindow, text="Next",command=lambda: changeLevelValue(True))
+        self.nextLevelValueButton.grid(row=0,column=maxNumLevelValues+2,sticky=tk.W)
         
         def changeLevelInLevelValueLabelList():
             numCurrentLevelValues = len(levelValues[self.levelIndex])
@@ -553,12 +575,13 @@ class PlateLayoutPage(tk.Frame):
                     levelValue = levelValues[self.levelIndex][j]
                     currentlabel.configure(text=levelValue,fg = self.currentpalette[j+1])
                     if j == self.levelValueIndex:
-                        currentlabel.configure(font='Helvetica 18 bold')
+                        print(currentlabel['text'])
+                        currentlabel.configure(font='Helvetica 18',borderwidth=2, relief="solid")
                     else:
-                        currentlabel.configure(font='Helvetica 18')
+                        currentlabel.configure(font='Helvetica 18',borderwidth=0, relief="solid")
                     j+=1
                 else:
-                    currentlabel.configure(text=self.blanktext)
+                    currentlabel.configure(text=self.blanktext,borderwidth=0, relief="solid")
         
         def selectWells(mark,immediate):
             wellSelectionBox = toggle_selector.RS.corners
@@ -760,20 +783,21 @@ class PlateLayoutPage(tk.Frame):
                                 plateID = finalLayoutDict['plateID'][row,col]
                                 wellID = finalLayoutDict['wellID'][row,col]
                                 nonUniquePositions.append(plateID+'/'+wellID)
-                print('NON UNIQUE POSITIONS')
-                print(nonUniquePositions)
-
-                if dataType == 'both':
-                    dataTypes = ['cell','cyt']
+                
+                if len(nonUniquePositions) == 0:
+                    if dataType == 'both':
+                        dataTypes = ['cell','cyt']
+                    else:
+                        dataTypes = [dataType]
+                    for dt in dataTypes:
+                        with open('misc/layoutDict-'+folderName+'-'+dt+'.pkl','wb') as f:
+                            pickle.dump(finalLayoutDict,f)
+                        for i in finalLayoutDict['keys']:
+                            level = levels[i]
+                            createLayoutVisual(baseLayoutDf,finalLayoutDict['keys'][i],i,level,levelValues,plateDimensions,numRowPlates,numColumnPlates,dt,infoDf,vlinelist,hlinelist)
+                    master.switch_frame(backPage,folderName)
                 else:
-                    dataTypes = [dataType]
-                for dt in dataTypes:
-                    with open('misc/layoutDict-'+folderName+'-'+dt+'.pkl','wb') as f:
-                        pickle.dump(finalLayoutDict,f)
-                    for i in finalLayoutDict['keys']:
-                        level = levels[i]
-                        createLayoutVisual(baseLayoutDf,finalLayoutDict['keys'][i],i,level,levelValues,plateDimensions,numRowPlates,numColumnPlates,dt,infoDf,vlinelist,hlinelist)
-                master.switch_frame(backPage,folderName)
+                    tk.messagebox.showinfo("Duplicate well labels", "These wells (plateID/wellID) have duplicate labels. Please correct them and try again:\n\n"+', '.join(nonUniquePositions))
             else:
                 print('Not all levels arranged')
 
@@ -815,7 +839,9 @@ class PlateLayoutPage(tk.Frame):
         buttonWindow = tk.Frame(self)
         buttonWindow.grid(row=6,column=0)
         
-        tk.Button(buttonWindow, text="OK",command=lambda: collectInputs()).grid(row=0,column=0)
+        self.FinishButton = tk.Button(buttonWindow, text="Finish",command=lambda: collectInputs(),font='Helvetica 14 bold')
+        self.FinishButton.grid(row=0,column=0)
+        self.FinishButton['state'] = 'disabled'
         #(self, master,folderName,levels,levelValues,maxNumLevelValues,numRowPlates,numColumnPlates,plateDimensions,dataType,shp)
         tk.Button(buttonWindow, text="Back",command=lambda: master.switch_frame(BlankSelectionPage,folderName,levels,levelValues,maxNumLevelValues,numRowPlates,numColumnPlates,plateDimensions,dataType,secondaryhomepage,backPage)).grid(row=0,column=1)
         tk.Button(buttonWindow, text="Quit",command=lambda: quit()).grid(row=0,column=2)
