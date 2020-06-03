@@ -232,70 +232,84 @@ class BlankSelectionPage(tk.Frame):
 
 def createLayoutVisual(baseLayoutDf,currentLayout,levelIndex,currentLevel,levelValues,plateDimensions,numRowPlates,numColumnPlates,dt,infoDf,vlinelist,hlinelist):
     
-        fig = plt.figure(figsize=(3*numColumnPlates*(plateDimensions[0]/8), 2.5*numRowPlates*(plateDimensions[1]/12)*figLengthScaling),tight_layout=True)
-        #fig_ax1 = fig.add_subplot(111)
-        gs = fig.add_gridspec(1, 1)
-        fig_ax1 = fig.add_subplot(gs[0])
-        
-        #Remove all axis elements
-        fig_ax1.set_xlim((0, max(baseLayoutDf['x'])+1))
-        fig_ax1.set_ylim((0, max(baseLayoutDf['y'])+1))
-        fig_ax1.set_xticks([], [])
-        fig_ax1.set_yticks([], [])
-        fig_ax1.set_xlabel('')
-        fig_ax1.set_ylabel('')
-        #Add plate dividing lines
-        for vlinex in vlinelist:
-            fig_ax1.axvline(vlinex,linestyle=':',color='k')
-        for hliney in hlinelist:
-            fig_ax1.axhline(hliney,linestyle=':',color='k')
-        #Add well IDs
-        for row in range(baseLayoutDf.shape[0]):
-            fig_ax1.annotate(infoDf.values[row][0],(baseLayoutDf.iloc[row,0],baseLayoutDf.iloc[row,1]),ha='center',va='center',size=7)
-        #Add plateIDs
-        for row in range(baseLayoutDf.shape[0]):
-            if infoDf.values[row][1] != 'DoNotLabel':
-                fig_ax1.annotate(infoDf.values[row][1],(baseLayoutDf.iloc[row,0]-0.6,baseLayoutDf.iloc[row,1]+0.5),size=7,ha='center',va='center')
-        
-        currentpalette = ['#808080']+sns.color_palette('husl',len(levelValues[levelIndex])).as_hex()
-        newLayoutDf = baseLayoutDf.copy()
-        newLayoutDf['key'] = currentLayout.flatten()
-            
-        g1 = sns.scatterplot(data=baseLayoutDf,x='x',y='y',ax=fig_ax1,color='#ffffff',s=200,marker='o')
-        if -1 in list(newLayoutDf['key']) or 'blank' in list(newLayoutDf['key']):
-            hueorder = [-1]
-            modifiedPalette = ['#808080']
-            ogpalette = modifiedPalette.copy()
-        else:
-            hueorder = []
-            modifiedPalette = []
-            ogpalette = modifiedPalette.copy()
-        for i in range(len(levelValues[levelIndex])):
-            if i in list(pd.unique(newLayoutDf['key'])):
-                hueorder.append(i)
-                modifiedPalette.append(currentpalette[i+1])
-        for i,val in enumerate(newLayoutDf['key']):
-            if val == 'blank':
-                newLayoutDf['key'][i] = -1
-            else:
-                print(val)
-        print(newLayoutDf)
-        print(pd.unique(newLayoutDf['key']))
-        print(hueorder)
-        print(modifiedPalette)
-        g1 = sns.scatterplot(data=newLayoutDf,x='x',y='y',ax=fig_ax1,hue='key',hue_order=hueorder,palette=modifiedPalette,s=200,markers=['o','X'],alpha=0.5,style='blank',style_order=[-1,0])
-        fig_ax1.legend_.remove()
-        titlelabels = [currentLevel+': ']
-        titlecolors = ['black']
-        print(levelValues)
-        for i,levelValue in enumerate(levelValues[levelIndex]):
-            titlelabels.append(str(levelValue))
-            titlecolors.append(modifiedPalette[i+len(ogpalette)])
-        rainbow_text(2,max(baseLayoutDf['y'])+2, titlelabels,titlecolors,size=14,ax=fig_ax1)
-        #plt.savefig('plateLayout-'+currentLevel+'.png',bbox_inches='tight')
+    maxTextLen = len(str(currentLevel))
+    for levelVal in levelValues[levelIndex]:
+        if len(str(levelVal)) > maxTextLen:
+            maxTextLen = len(levelVal)
+
+    fig = plt.figure(figsize=(3*numColumnPlates*(plateDimensions[0]/8)+1+(0.125*maxTextLen), 2.5*numRowPlates*(plateDimensions[1]/12)*figLengthScaling),tight_layout=True)
+    #fig_ax1 = fig.add_subplot(111)
+    gs = fig.add_gridspec(1, 1)
+    fig_ax1 = fig.add_subplot(gs[0])
+    
+    #Remove all axis elements
+    fig_ax1.set_xlim((0, max(baseLayoutDf['x'])+1))
+    fig_ax1.set_ylim((0, max(baseLayoutDf['y'])+1))
+    fig_ax1.set_xticks([])
+    fig_ax1.set_yticks([])
+    fig_ax1.set_xlabel('')
+    fig_ax1.set_ylabel('')
+    #Add plate dividing lines
+    for vlinex in vlinelist:
+        fig_ax1.axvline(vlinex,linestyle=':',color='k')
+    for hliney in hlinelist:
+        fig_ax1.axhline(hliney,linestyle=':',color='k')
+    #Add well IDs
+    for row in range(baseLayoutDf.shape[0]):
+        fig_ax1.annotate(infoDf.values[row][0],(baseLayoutDf.iloc[row,0],baseLayoutDf.iloc[row,1]),ha='center',va='center',size=7)
+    #Add plateIDs
+    for row in range(baseLayoutDf.shape[0]):
+        if infoDf.values[row][1] != 'DoNotLabel':
+            fig_ax1.annotate(infoDf.values[row][1],(baseLayoutDf.iloc[row,0]-0.6,baseLayoutDf.iloc[row,1]+0.5),size=7,ha='center',va='center')
+    
+    currentpalette = ['#808080']+sns.color_palette('husl',len(levelValues[levelIndex])).as_hex()
+    newLayoutDf = baseLayoutDf.copy()
+    newLayoutDf['key'] = currentLayout.flatten()
+
+    g1 = sns.scatterplot(data=baseLayoutDf,x='x',y='y',ax=fig_ax1,color='#ffffff',s=200,marker='o')
+    if -1 in list(newLayoutDf['key']) or 'blank' in list(newLayoutDf['key']):
+        hueorder = [-1]
+        modifiedPalette = ['#808080']
+        ogpalette = modifiedPalette.copy()
+    else:
+        hueorder = []
+        modifiedPalette = []
+        ogpalette = modifiedPalette.copy()
+    for i in range(len(levelValues[levelIndex])):
+        if i in list(pd.unique(newLayoutDf['key'])):
+            hueorder.append(i)
+            modifiedPalette.append(currentpalette[i+1])
+    for i,val in enumerate(newLayoutDf['key']):
+        if val == 'blank':
+            newLayoutDf['key'].iloc[i] = -1
+            newLayoutDf['blank'].iloc[i] = -1
+    g1 = sns.scatterplot(data=newLayoutDf,x='x',y='y',ax=fig_ax1,hue='key',hue_order=hueorder,palette=modifiedPalette,s=200,markers=['X','o'],alpha=0.5,style='blank',style_order=[-1,0])
+    titlelabels = [currentLevel+': ']
+    titlecolors = ['black']
+    
+    for i,levelValue in enumerate(levelValues[levelIndex]):
+        titlelabels.append(str(levelValue))
+        titlecolors.append(modifiedPalette[i+len(ogpalette)])
+    #plt.savefig('plateLayout-'+currentLevel+'.png',bbox_inches='tight')
+    if 'plateLayouts' not in os.listdir('plots'):
         subprocess.run(['mkdir','plots/plateLayouts'])
-        plt.savefig('plots/plateLayouts/plateLayout-'+currentLevel+'-'+dt+'.png',bbox_inches='tight')
-        plt.clf()
+    legendHandlesLabels = fig_ax1.get_legend_handles_labels()
+    i=0
+    newLegendLabels = []
+    newLegendHandles = []
+    legendHandles = legendHandlesLabels[0]
+    levelValues = levelValues[levels.index(currentLevel)]
+    for legendHandle in legendHandles:
+        if i < len(levelValues)+2 and i != 1:
+            if i == 0:
+                newLegendLabels.append(currentLevel)
+            else:
+                newLegendLabels.append(levelValues[i-2])
+            newLegendHandles.append(legendHandle)
+        i+=1
+    fig_ax1.legend(bbox_to_anchor=(1, 1),frameon=False,handles=newLegendHandles, labels=newLegendLabels)
+    plt.savefig('plots/plateLayouts/plateLayout-'+currentLevel+'-'+dt+'.png',bbox_inches='tight')
+    plt.clf()
 
 class PlateLayoutPage(tk.Frame):
     def __init__(self, master,folderName,blankWells,levels,levelValues,maxNumLevelValues,numRowPlates,numColumnPlates,plateDimensions):
