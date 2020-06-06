@@ -298,7 +298,7 @@ def createLayoutVisual(baseLayoutDf,currentLayout,levelIndex,currentLevel,levelV
     newLegendLabels = []
     newLegendHandles = []
     legendHandles = legendHandlesLabels[0]
-    levelValues = levelValues[levels.index(currentLevel)]
+    levelValues = levelValues[levelIndex]
     for legendHandle in legendHandles:
         if i < len(levelValues)+2 and i != 1:
             if i == 0:
