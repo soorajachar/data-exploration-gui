@@ -157,12 +157,22 @@ def demultiplexSingleCellData(experimentParameters):
     with open('misc/fileNameDict.pkl','wb') as f:
         pickle.dump(fileNameDict,f)
 
+def performCommaCheck(fileName):
+    with open('inputData/bulkCSVFiles/'+fileName, 'r') as istr:
+        with open('inputData/bulkCSVFiles/'+fileName, 'w') as ostr:
+            for line in istr:
+                if line[-1] != ',':
+                    line = line.rstrip('\n') + ','
+                    print(line, file=ostr)
+
 def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataType,layoutDict):
     if experimentParameters['format'] == 'tube':
         fullFormatDf = pickle.load(open('misc/tubeLayout-'+folderName+'-cell.pkl','rb'))
         dfList = []
         for fileName in os.listdir('inputData/bulkCSVFiles/'):
             if '.csv' in fileName:
+                performCommaCheck(fileName)
+                
                 bulkTubeCSVFileName = fileName
                 columnMultiIndexTuples = cellDataProcessing.parseCellCSVHeaders(pd.read_csv('inputData/bulkCSVFiles/'+bulkTubeCSVFileName).columns)
                 columnMultiIndex = pd.MultiIndex.from_tuples(columnMultiIndexTuples,names=['CellType','Marker','Statistic'])

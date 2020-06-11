@@ -283,6 +283,8 @@ def createLayoutVisual(baseLayoutDf,currentLayout,levelIndex,currentLevel,levelV
         if val == 'blank':
             newLayoutDf['key'].iloc[i] = -1
             newLayoutDf['blank'].iloc[i] = -1
+        else:
+            newLayoutDf['blank'].iloc[i] = 0 
     g1 = sns.scatterplot(data=newLayoutDf,x='x',y='y',ax=fig_ax1,hue='key',hue_order=hueorder,palette=modifiedPalette,s=200,markers=['X','o'],alpha=0.5,style='blank',style_order=[-1,0])
     titlelabels = [currentLevel+': ']
     titlecolors = ['black']
