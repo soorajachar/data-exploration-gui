@@ -300,7 +300,7 @@ def createLayoutVisual(baseLayoutDf,currentLayout,levelIndex,currentLevel,levelV
     newLegendLabels = []
     newLegendHandles = []
     legendHandles = legendHandlesLabels[0]
-    currentLevelValues = levelValues[levels.index(currentLevel)]
+    currentLevelValues = levelValues[levelIndex]
     for legendHandle in legendHandles:
         #Skips the style legend handles
         if i < len(currentLevelValues)+1:
