@@ -300,14 +300,15 @@ def createLayoutVisual(baseLayoutDf,currentLayout,levelIndex,currentLevel,levelV
     newLegendLabels = []
     newLegendHandles = []
     legendHandles = legendHandlesLabels[0]
-    levelValues = levelValues[levelIndex]
+    currentLevelValues = levelValues[levels.index(currentLevel)]
     for legendHandle in legendHandles:
-        if i < len(levelValues)+2 and i != 1:
+        #Skips the style legend handles
+        if i < len(currentLevelValues)+1:
             if i == 0:
                 modifiedLevel = currentLevel.translate(str.maketrans({"-":  r"\-","]":  r"\]","\\": r"\\","^":  r"\^","$":  r"\$","*":  r"\*",".":  r"\.","_":  r"\_","(":  r"\(",")":  r"\)","[":  r"\[","%": r"\%"}))
                 newLegendLabels.append('$\\bf'+modifiedLevel+'$')
             else:
-                newLegendLabels.append(levelValues[i-2])
+                newLegendLabels.append(currentLevelValues[i-1])
             newLegendHandles.append(legendHandle)
         i+=1
     fig_ax1.legend(bbox_to_anchor=(1, 1),frameon=False,handles=newLegendHandles, labels=newLegendLabels)
