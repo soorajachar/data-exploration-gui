@@ -307,9 +307,10 @@ def createLayoutVisual(baseLayoutDf,currentLayout,levelIndex,currentLevel,levelV
             if i == 0:
                 modifiedLevel = currentLevel.translate(str.maketrans({"-":  r"\-","]":  r"\]","\\": r"\\","^":  r"\^","$":  r"\$","*":  r"\*",".":  r"\.","_":  r"\_","(":  r"\(",")":  r"\)","[":  r"\[","%": r"\%"}))
                 newLegendLabels.append('$\\bf'+modifiedLevel+'$')
+                newLegendHandles.append(legendHandle)
             else:
                 newLegendLabels.append(currentLevelValues[i-1])
-            newLegendHandles.append(legendHandle)
+                newLegendHandles.append(legendHandle[i+1])
         i+=1
     fig_ax1.legend(bbox_to_anchor=(1, 1),frameon=False,handles=newLegendHandles, labels=newLegendLabels)
     plt.savefig('plots/plateLayouts/plateLayout-'+currentLevel+'-'+dt+'.png',bbox_inches='tight')
