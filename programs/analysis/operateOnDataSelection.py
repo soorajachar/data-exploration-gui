@@ -34,7 +34,7 @@ clusteringFunctionDict = {'k-means':KMeans,'db-scan':DBSCAN,'hierarchical':Agglo
 #clusteringFunctionDict = {'k-means':KMeans,'db-scan':DBSCAN,'hierarchical':AgglomerativeClustering,'phenograph':phenograph.cluster,'halx':[],'parc':[]}
 clusterParameterDict = {'k-means':['n_clusters'],'db-scan':['eps'],'hierarchical':['n_clusters','distance_threshold'],'phenograph':['k'],'halx':['cv'],'parc':['dist_std_local','resolution_parameter']}
 #lower, upper, scale, default
-clusterParameterBoundsDict = {'n_clusters':[0,20,1,2],'eps':[0,5,0.05,0.5],'distance_threshold':[0,20,0.2,0],'k':[2,100,2,30],'cv':[0.6,1.0,0.05,0.8],'dist_std_local':[1,10,1,2],'resolution_parameter':[1,10,1,1]}
+clusterParameterBoundsDict = {'n_clusters':[0,20,1,2],'eps':[0,5,0.05,0.5],'distance_threshold':[0,20,0.2,0],'k':[2,100,2,30],'cv':[0.6,1.0,0.05,0.8],'dist_std_local':[1,10,1,2],'resolution_parameter':[0.1,10,0.1,1]}
         
 clusterComparisonParameterList = ['confidence','fold change','response cutoff (%)']
 clusterComparisonParameterBoundsDict = {'confidence':[0.1,0.01,0.01,0.05],'fold change':[1,5,0.2,2],'response cutoff (%)':[0,0.5,0.05,0.1]}
@@ -218,7 +218,7 @@ def clusterData(scaledDf,clusteringMethod,clusteringParameters):
         cluster_labels = UHAL(scaledDf, n_cells, name=dir_name,arcsinh=False,scaling=False).run(list(scaledDf.columns), clusteringParameters['cv'], unused=[], output_dir='halxoutput')[0]
         os.chdir('../../..')
     elif clusteringMethod == 'parc':
-        Parc1 = parc.PARC(scaledDf.values)
+        Parc1 = parc.PARC(scaledDf.values,**clusteringParameters)
         Parc1.run_PARC()
         cluster_labels = Parc1.labels
     else:
