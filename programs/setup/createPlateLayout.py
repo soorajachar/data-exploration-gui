@@ -310,7 +310,7 @@ def createLayoutVisual(baseLayoutDf,currentLayout,levelIndex,currentLevel,levelV
                 newLegendHandles.append(legendHandle)
             else:
                 newLegendLabels.append(currentLevelValues[i-1])
-                newLegendHandles.append(legendHandle[i+1])
+                newLegendHandles.append(legendHandles[i+1])
         i+=1
     fig_ax1.legend(bbox_to_anchor=(1, 1),frameon=False,handles=newLegendHandles, labels=newLegendLabels)
     plt.savefig('plots/plateLayouts/plateLayout-'+currentLevel+'-'+dt+'.png',bbox_inches='tight')
