@@ -157,7 +157,7 @@ def returnOrderedClusters(clusterList):
     numericClusters = []
     clusterDict = {}
     for cluster in clusterList:
-        numeric = re.findall(r'\d+', cluster)
+        numeric = re.findall(r'\d+', str(cluster))
         clusterDict[numeric] = cluster
         numericClusters.append(numeric)
     orderedNumericClusterList = sorted(numericClusters)
@@ -175,7 +175,8 @@ def returnOriginalOrders(trueLabelDict,plottingDf,kwargs,dimensionality):
         newkwargs = kwargs.copy()
     orderDict = {}
     for kwarg in newkwargs:
-        if newkwargs[kwarg] == 'Cluster' and '$' not in plottingDf[newkwargs[kwarg]][0]:
+        print(plottingDf[newkwargs[kwarg]])
+        if newkwargs[kwarg] == 'Cluster' and '$' not in str(plottingDf[newkwargs[kwarg]][0]):
             orderedValues = list(map(str,sorted(list(map(int,list(pd.unique(plottingDf['Cluster'])))))))
         else:
             if newkwargs[kwarg] in trueLabelDict.keys():
@@ -536,7 +537,7 @@ def updateDropdownControlledPlot(frameCanvas,plotAxis,plottingDf,levelVars,xColu
             tempDict = {}
             for i in range(len(clusters)):
                 cluster = clusters[i]
-                numeric = re.findall(r'\d+', cluster)
+                numeric = re.findall(r'\d+', str(cluster))
                 tempDict[int(numeric[0])] = cluster
             sortedTempDict = OrderedDict(sorted(tempDict.items()))
             orderDict['hue_order'] = list(sortedTempDict.values())

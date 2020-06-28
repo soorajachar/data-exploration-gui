@@ -322,7 +322,7 @@ def get_cluster_centroids(plottingDf,singleCluster=False):
     clusterCentroids = []
     if not singleCluster:
         for cluster in pd.unique(plottingDf['Cluster']): 
-            numeric = re.findall(r'\d+', cluster)
+            numeric = re.findall(r'\d+', str(cluster))
             clusterSubset = plottingDf[plottingDf['Cluster'] == cluster]
             clusterX = list(clusterSubset['Dimension 1'])
             clusterY = list(clusterSubset['Dimension 2'])
@@ -331,7 +331,7 @@ def get_cluster_centroids(plottingDf,singleCluster=False):
     else:
         if 'Cluster' in plottingDf.columns:
             cluster = list(pd.unique(plottingDf['Cluster']))[0]
-            numeric = re.findall(r'\d+', cluster)
+            numeric = re.findall(r'\d+', str(cluster))
         else:
             numeric = [1]
         clusterSubset = plottingDf.copy()
