@@ -25,7 +25,7 @@ realDataTypeNameDict = {'cyt':'Supernatant','cell':'Surface/Intracellular Marker
 plateRowLetters = string.ascii_uppercase[:16]
 plateColumnNumbers = list(range(1,25))
 
-colwrap = 6
+colwrap = 6 
 #For macbook by itself
 #figLengthScaling = 0.5
 #For work monitor
@@ -33,58 +33,124 @@ figLengthScaling = 1
 #For home monitor
 #figLengthScaling = 0.75
 
+#https://stackoverflow.com/questions/16856788/slice-2d-array-into-smaller-2d-arrays
+def blockshaped(arr, nrows, ncols):
+    """
+    Return an array of shape (n, nrows, ncols) where
+    n * nrows * ncols = arr.size
+
+    If arr is a 2D array, the returned array should look like n subblocks with
+    each subblock preserving the "physical" layout of arr.
+    """
+    h, w = arr.shape
+    assert h % nrows == 0, "{} rows is not evenly divisble by {}".format(h, nrows)
+    assert w % ncols == 0, "{} cols is not evenly divisble by {}".format(w, ncols)
+    return (arr.reshape(h//nrows, nrows, -1, ncols)
+               .swapaxes(1,2)
+               .reshape(-1, nrows, ncols))
+
 def returnBaseLayout(plateDimensions,conditionPlateRows,timepointPlateColumns):
-    baseLayoutX = list(range(1,plateDimensions[1]*timepointPlateColumns+1))
-    baseLayoutY = list(range(plateDimensions[0]*conditionPlateRows,0,-1))
+    if conditionPlateRows == 1 and timepointPlateColumns > colwrap:
+        colwrapBool = True
+    else:
+        colwrapBool = False
+
+    if colwrapBool:
+        visualNumRowPlates = math.ceil(timepointPlateColumns/colwrap)
+        visualNumColumnPlates = colwrap
+    else:
+        visualNumRowPlates = conditionPlateRows
+        visualNumColumnPlates = timepointPlateColumns
+
+    baseLayoutX = list(range(1,plateDimensions[1]*visualNumColumnPlates+1))
+    baseLayoutY = list(range(plateDimensions[0]*visualNumRowPlates,0,-1))
     
+    if colwrapBool:
+        rowLimits = list(range((visualNumRowPlates-1)*plateDimensions[0],len(baseLayoutY)))
+        plateOverhang = timepointPlateColumns - ((visualNumRowPlates-1)*colwrap)
+        colLimits = list(range((plateOverhang*plateDimensions[1]),(visualNumColumnPlates*plateDimensions[1])))
+    else:
+        rowLimits = []
+        colLimits = []
+
     #Slightly shift points over every time plate changes
-    hshift = np.repeat(list(range(timepointPlateColumns)),plateDimensions[1])
-    vshift = np.repeat(list(range(conditionPlateRows)),plateDimensions[0])
+    hshift = np.repeat(list(range(visualNumColumnPlates)),plateDimensions[1])
+    vshift = np.repeat(list(range(visualNumRowPlates)),plateDimensions[0])
 
     baseLayoutX = np.add(np.array(baseLayoutX),np.array(hshift))
     baseLayoutY = np.add(np.array(baseLayoutY),np.array(vshift[::-1]))
 
     pointList = []
     infoList = []
+    trueCol = -1
+
     for row,y in enumerate(baseLayoutY):
+        if row % plateDimensions[0] == 0:
+            trueCol+=1
         for col,x in enumerate(baseLayoutX):
             rowLetter = plateRowLetters[row%plateDimensions[0]]
+            rowLetter = plateRowLetters[0]
             columnNumber = plateColumnNumbers[col%plateDimensions[1]]
             key=-1
-            pointList.append([x,y,key,int(row/plateDimensions[0]),int(col/plateDimensions[1]),0])
-            plateName = plateRowLetters[int(row/plateDimensions[0])]+str(int(col/plateDimensions[1])+1)
-            if row % plateDimensions[0] == 0 and col % plateDimensions[1] == 0:
-                infoList.append([rowLetter+str(columnNumber),plateName,plateName])
+            if not colwrapBool:
+                plateName = plateRowLetters[int(row/plateDimensions[0])]+str(int(col/plateDimensions[1])+1)
             else:
-                infoList.append([rowLetter+str(columnNumber),'DoNotLabel',plateName])
+                plateName = plateRowLetters[0]+str(int((trueCol*colwrap*plateDimensions[1]+col)/plateDimensions[1])+1)
+            if row not in rowLimits or col not in colLimits:            
+                if row % plateDimensions[0] == 0 and col % plateDimensions[1] == 0:
+                    infoList.append([rowLetter+str(columnNumber),plateName,plateName])
+                else:
+                    infoList.append([rowLetter+str(columnNumber),'DoNotLabel',plateName])
+                pointList.append([x,y,key,int(row/plateDimensions[0]),int(col/plateDimensions[1]),0])
+            else:
+                infoList.append([rowLetter+str(columnNumber),'DoNotLabel','None'])
+                pointList.append([x,y,key,int(row/plateDimensions[0]),int(col/plateDimensions[1]),-1])
 
     pointMatrix = np.matrix(pointList)
     infoMatrix = np.matrix(infoList)
+
+    if colwrapBool:
+        for i,matrix in enumerate([pointMatrix,infoMatrix]):
+            newList = []
+            for col in range(matrix.shape[1]):
+                vals = np.reshape(matrix[:,col],(visualNumRowPlates*plateDimensions[0],visualNumColumnPlates*plateDimensions[1]))
+                reshapedVals = blockshaped(np.asarray(vals), plateDimensions[0], plateDimensions[1])
+                reshapedValList = [reshapedVals[x,:,:] for x in range(timepointPlateColumns)]
+                #reshapedValList = [reshapedVals[x,:,:] for x in range(reshapedVals.shape[0])]
+                reshapedMatrix = np.hstack(reshapedValList)
+                newList.append(reshapedMatrix.flatten())
+            if i == 0:
+                pointMatrix = np.matrix(newList).T
+            else:
+                infoMatrix = np.matrix(newList).T
+    
     pointDf = pd.DataFrame(pointMatrix,columns=['x','y','key','plateRow','plateColumn','blank'])
     infoDf = pd.DataFrame(infoMatrix,columns=['wellID','plateID','plateName'])
-
+    
     #Make lines to separate plates
     vlineList = []
-    for vline in range(1,timepointPlateColumns):
+    for vline in range(1,visualNumColumnPlates):
         vlinex = (baseLayoutX[vline*plateDimensions[1]-1]+baseLayoutX[vline*plateDimensions[1]])/2.0
         vlineList.append(vlinex)
     hlineList = []
-    for hline in range(1,conditionPlateRows):
+    for hline in range(1,visualNumRowPlates):
         hliney = (baseLayoutY[hline*plateDimensions[0]-1]+baseLayoutY[hline*plateDimensions[0]])/2.0
         hlineList.append(hliney)
     
     return pointDf,infoDf,vlineList,hlineList
 
 class BlankSelectionPage(tk.Frame):
-    def __init__(self, master,folderName,levels,levelValues,maxNumLevelValues,numRowPlates,numColumnPlates,plateDimensions,dt,shp,bPage):
+    def __init__(self, master,folderName,levels,levelValues,maxNumLevelValues,numRowPlates,numColumnPlates,plateDimensions,dt):
+        if numRowPlates == 1 and numColumnPlates > colwrap:
+            colwrapBool = True
+        else:
+            colwrapBool = False
 
         self.root = master.root
         tk.Frame.__init__(self, master)
         
         global secondaryhomepage,dataType,backPage
-        secondaryhomepage = shp
         dataType = dt
-        backPage = bPage
 
         tk.Label(self,text='Blank Selection Page:',font=('Arial',20)).grid(row=0,column=0)
 
@@ -95,8 +161,14 @@ class BlankSelectionPage(tk.Frame):
             scalingFactor = 1.5
         else:
             scalingFactor = 1
-
-        fig = plt.figure(figsize=(3*numColumnPlates*(plateDimensions[0]/8), 2*numRowPlates*(plateDimensions[1]/12)*figLengthScaling),tight_layout=True)
+        
+        if colwrapBool:
+            visualNumRowPlates = math.ceil(numColumnPlates/colwrap)
+            visualNumColumnPlates = colwrap
+        else:
+            visualNumRowPlates = numRowPlates
+            visualNumColumnPlates = numColumnPlates 
+        fig = plt.figure(figsize=(3*visualNumColumnPlates*(plateDimensions[0]/8), 2*visualNumRowPlates*(plateDimensions[1]/12)*figLengthScaling),tight_layout=True)
         gs = fig.add_gridspec(1, 1)
         fig_ax1 = fig.add_subplot(gs[0])
 
@@ -227,7 +299,6 @@ class BlankSelectionPage(tk.Frame):
         buttonWindow.grid(row=6,column=0)
         
         tk.Button(buttonWindow, text="OK",command=lambda: collectInputs(),font='Helvetica 14 bold').grid(row=0,column=0)
-        tk.Button(buttonWindow, text="Back",command=lambda: master.switch_frame(secondaryhomepage,folderName,bPage)).grid(row=0,column=1)
         tk.Button(buttonWindow, text="Quit",command=lambda: quit()).grid(row=0,column=2)
 
 def createLayoutVisual(baseLayoutDf,currentLayout,levelIndex,currentLevel,levelValues,plateDimensions,numRowPlates,numColumnPlates,dt,infoDf,vlinelist,hlinelist):
@@ -236,8 +307,19 @@ def createLayoutVisual(baseLayoutDf,currentLayout,levelIndex,currentLevel,levelV
     for levelVal in levelValues[levelIndex]:
         if len(str(levelVal)) > maxTextLen:
             maxTextLen = len(levelVal)
+    
+    if numRowPlates == 1 and numColumnPlates > colwrap:
+        colwrapBool = True
+    else:
+        colwrapBool = False
 
-    fig = plt.figure(figsize=(3*numColumnPlates*(plateDimensions[0]/8)+1+(0.125*maxTextLen), 2.5*numRowPlates*(plateDimensions[1]/12)*figLengthScaling),tight_layout=True)
+    if colwrapBool:
+        visualNumRowPlates = math.ceil(numColumnPlates/colwrap)
+        visualNumColumnPlates = colwrap
+    else:
+        visualNumRowPlates = numRowPlates
+        visualNumColumnPlates = numColumnPlates 
+    fig = plt.figure(figsize=(3*visualNumColumnPlates*(plateDimensions[0]/8)+1+(0.125*maxTextLen), 2.5*visualNumRowPlates*(plateDimensions[1]/12)*figLengthScaling),tight_layout=True)
     #fig_ax1 = fig.add_subplot(111)
     gs = fig.add_gridspec(1, 1)
     fig_ax1 = fig.add_subplot(gs[0])
@@ -327,7 +409,19 @@ class PlateLayoutPage(tk.Frame):
         plotFrame = tk.Frame(self)
         plotFrame.grid(row=1,column=0)
         
-        fig = plt.figure(figsize=(3*numColumnPlates*(plateDimensions[0]/8), 2*numRowPlates*(plateDimensions[1]/12)*figLengthScaling),tight_layout=True)
+        if numRowPlates == 1 and numColumnPlates > colwrap:
+            colwrapBool = True
+        else:
+            colwrapBool = False
+        
+        if colwrapBool:
+            visualNumRowPlates = math.ceil(numColumnPlates/colwrap)
+            visualNumColumnPlates = colwrap
+        else:
+            visualNumRowPlates = numRowPlates
+            visualNumColumnPlates = numColumnPlates 
+        fig = plt.figure(figsize=(3*visualNumColumnPlates*(plateDimensions[0]/8), 2*visualNumRowPlates*(plateDimensions[1]/12)*figLengthScaling),tight_layout=True)
+        #fig = plt.figure(figsize=(3*numColumnPlates*(plateDimensions[0]/8), 2*numRowPlates*(plateDimensions[1]/12)*figLengthScaling),tight_layout=True)
         gs = fig.add_gridspec(1, 1)
         fig_ax1 = fig.add_subplot(gs[0])
         
@@ -749,6 +843,9 @@ class PlateLayoutPage(tk.Frame):
             print(keyMatrix)
             print(fullTiledLevelLayout)
             unrolledKeys = fullTiledLevelLayout.flatten()
+            #with open('tempNoColWrapping.pkl','wb') as f:
+            with open('tempColWrapping.pkl','wb') as f:
+                pickle.dump(unrolledKeys.T,f)
             if action == 'tile':
                 self.currentLayout['key'] = unrolledKeys
             else:
