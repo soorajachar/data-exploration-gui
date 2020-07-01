@@ -286,6 +286,7 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
                 sampleID = int(rawData.iloc[row,0])-1
                 wellID = plateRowLetters[int(sampleID/plateDimensions[1])]+str(plateColumnNumbers[sampleID % plateDimensions[1]])
                 fullID = plateID+'-'+wellID
+                
                 sampleLocation = np.argwhere(identificationMatrix == fullID)[0]
                 column = []
                 tupleList = []

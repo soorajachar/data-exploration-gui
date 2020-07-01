@@ -89,7 +89,6 @@ def returnBaseLayout(plateDimensions,conditionPlateRows,timepointPlateColumns):
             trueCol+=1
         for col,x in enumerate(baseLayoutX):
             rowLetter = plateRowLetters[row%plateDimensions[0]]
-            rowLetter = plateRowLetters[0]
             columnNumber = plateColumnNumbers[col%plateDimensions[1]]
             key=-1
             if not colwrapBool:
@@ -846,9 +845,6 @@ class PlateLayoutPage(tk.Frame):
             print(keyMatrix)
             print(fullTiledLevelLayout)
             unrolledKeys = fullTiledLevelLayout.flatten()
-            #with open('tempNoColWrapping.pkl','wb') as f:
-            with open('tempColWrapping.pkl','wb') as f:
-                pickle.dump(unrolledKeys.T,f)
             if action == 'tile':
                 self.currentLayout['key'] = unrolledKeys
             else:
