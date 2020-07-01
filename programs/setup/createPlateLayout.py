@@ -140,7 +140,7 @@ def returnBaseLayout(plateDimensions,conditionPlateRows,timepointPlateColumns):
     return pointDf,infoDf,vlineList,hlineList
 
 class BlankSelectionPage(tk.Frame):
-    def __init__(self, master,folderName,levels,levelValues,maxNumLevelValues,numRowPlates,numColumnPlates,plateDimensions,dt):
+    def __init__(self, master,folderName,levels,levelValues,maxNumLevelValues,numRowPlates,numColumnPlates,plateDimensions,dt,shp,bPage):
         if numRowPlates == 1 and numColumnPlates > colwrap:
             colwrapBool = True
         else:
@@ -150,7 +150,9 @@ class BlankSelectionPage(tk.Frame):
         tk.Frame.__init__(self, master)
         
         global secondaryhomepage,dataType,backPage
+        secondaryhomepage = shp
         dataType = dt
+        backPage = bPage
 
         tk.Label(self,text='Blank Selection Page:',font=('Arial',20)).grid(row=0,column=0)
 
@@ -299,6 +301,7 @@ class BlankSelectionPage(tk.Frame):
         buttonWindow.grid(row=6,column=0)
         
         tk.Button(buttonWindow, text="OK",command=lambda: collectInputs(),font='Helvetica 14 bold').grid(row=0,column=0)
+        tk.Button(buttonWindow, text="Back",command=lambda: master.switch_frame(secondaryhomepage,folderName,bPage)).grid(row=0,column=1)
         tk.Button(buttonWindow, text="Quit",command=lambda: quit()).grid(row=0,column=2)
 
 def createLayoutVisual(baseLayoutDf,currentLayout,levelIndex,currentLevel,levelValues,plateDimensions,numRowPlates,numColumnPlates,dt,infoDf,vlinelist,hlinelist):
