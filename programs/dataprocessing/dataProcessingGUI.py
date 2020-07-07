@@ -148,6 +148,7 @@ def dataProcessingMaster(folderName,expNum,dataType,ex_data):
             scdf = scdp.createInitialSingleCellDataFrame(folderName,expNum,fileNameDf)
         else:
             scdf = scdp.createTubeSingleCellDataFrame(folderName,experimentLevelLayoutDict)
+        print(scdf)
         #if 'singleCellDataFrame-proliferation-'+folderName+'.pkl' in fileList:
         #    #if experimentType not in ['AntibodyTest']:
         #        scdp.createCompleteSingleCellDf(folderName)

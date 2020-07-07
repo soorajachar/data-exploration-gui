@@ -23,13 +23,15 @@ idx = pd.IndexSlice
 
 #Standard BD Biosciences CBA Kit Cytokines
 bdMouseThKitDict = {'IFNg':17200,'IL-2':17200,'IL-4':14000,'IL-6':21900,'IL-10':18900,'IL-17A':15500,'TNFa':17500}
+#Inflammatory BD Biosciences CBA Kit Cytokines
+bdMouseInfKitDict = {'IFNg':17200,'IL-6':21900,'IL-10':18900,'TNFa':17500,'IL-12p70':57480,'MCP-1':16000}
 #Inflammatory Inflammatory BD Biosciences CBA Kit Cytokines
 bdHumanInfKitDict = {'IL-12p70':70000,'IL-1B':17300,'IL-8':8904}
 #Legendplex 13-plex mouse th kit
 legendPlexMouseThKitDict = {'IFNg':15652,'IL-5':26200,'TNFa':25896,'IL-2':17231,'IL-6':21709,'IL-4':13500,'IL-10':20641,'IL-9':14300,'IL-17A':14978,'IL-17F':14900,'IL-21':14400,'IL-22':16800,'IL-13':12300}
 
 #Combine all cytokine bead kit molar masses:
-listOfKitDicts = [legendPlexMouseThKitDict,bdMouseThKitDict,bdHumanInfKitDict]
+listOfKitDicts = [legendPlexMouseThKitDict,bdMouseThKitDict,bdHumanInfKitDict,bdMouseInfKitDict]
 completeCytokineMWDict = {}
 for dictName in listOfKitDicts:
     completeCytokineMWDict.update(dictName)
@@ -87,7 +89,10 @@ def parseCytokineCSVHeaders(columns):
     newMultiIndexList = []
     for column in columns[1:-1]:
         populationNameVsStatisticSplit = column.split(' | ')
-        cytokine = populationNameVsStatisticSplit[0].split('/')[-1]
+        if 'Barcode' not in populationNameVsStatisticSplit[0]:
+            cytokine = populationNameVsStatisticSplit[0].split('/')[-1]
+        else:
+            cytokine = populationNameVsStatisticSplit[0].split('/')[-2]
         newMultiIndexList.append([cytokine])
     return newMultiIndexList
 

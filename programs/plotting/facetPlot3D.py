@@ -158,9 +158,9 @@ def plot(plottingDf,subsettedDf,kwargs,facetKwargs,auxillaryKwargs,plotOptions):
             subsettedDf[np.isnan(subsettedDf)]=minVal
             if minVal <= 0:
                 subsettedDf[kwargs['z']] = subsettedDf[kwargs['z']]+abs(minVal)+1
-            log_norm = LogNorm(vmin=subsettedDf[kwargs['z']].min().min(), vmax=subsettedDf[kwargs['z']].max().max())
+            log_norm = LogNorm(vmin=subsettedDf[kwargs['z']].min(), vmax=subsettedDf[kwargs['z']].max())
             sym_log_norm = ''
-            cbar_ticks = [math.pow(10, i) for i in range(math.floor(math.log10(subsettedDf[kwargs['z']].min().min())), 1+math.ceil(math.log10(subsettedDf[kwargs['z']].max().max())))]
+            cbar_ticks = [math.pow(10, i) for i in range(math.floor(math.log10(subsettedDf[kwargs['z']].min())), 1+math.ceil(math.log10(subsettedDf[kwargs['z']].max())))]
             lin_thresh = ''
         elif plotOptions['Colorbar']['axisScaling'] == 'Biexponential':
             logbool = False 

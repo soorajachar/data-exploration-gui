@@ -80,7 +80,7 @@ def cleanUpFlowjoCSV(fileArray,folderName,dataType,experimentParameters):
         for i in range(0,temp.shape[0]):
             fullfilename = 'inputData/singleCellCSVFiles/'+name+'/'+temp.iloc[i,0][:temp.iloc[i,0].find('.')]
             if '_' in temp.iloc[i,0]:
-                wellID = temp.iloc[i,0].split('_')[2]
+                wellID = temp.iloc[i,0].split('.')[0].split('_')[-3]
             else:
                 wellID = temp.iloc[i,0]
             print(wellID)
