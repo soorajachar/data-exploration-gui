@@ -109,7 +109,7 @@ class PlotExperimentWindow(tk.Frame):
             dataType = str(v2.get())
             global experimentDf
             if dataType != 'singlecell':
-                experimentDf = pickle.load(open('outputData/pickleFiles/'+initialDataProcessing.dataTypeDataFrameFileNames[dataType]+'-'+folderName+modifiedString+'.pkl','rb'))
+                experimentDf = pd.read_pickle('outputData/pickleFiles/'+initialDataProcessing.dataTypeDataFrameFileNames[dataType]+'-'+folderName+modifiedString+'.pkl')
                 print(experimentDf)
             else:
                 if 'initialSingleCellDf-channel-'+folderName+modifiedString+'.pkl' in os.listdir('outputData/pickleFiles/'):

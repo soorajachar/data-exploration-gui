@@ -43,6 +43,46 @@ def returnMultiIndex(sortedData,sortedFiles,dataType,folderName):
     else:
         return sortedFiles,newMultiIndex
 
+def decodeBarcodedPlates(experimentParameters,folderName,dataType):
+    path = 'inputData/bulkCSVFiles/'
+    barcodingDict = experimentParameters['barcodingDict']
+    for barcodedPlate in barcodingDict:
+        barcodedCSV = pd.read_csv(path+barcodedPlate+'_'+dataType+'.csv')
+        for decodedPlate in barcodingDict[barcodedPlate]:
+            decodingIndices = [0]
+            barcodes = barcodingDict[barcodedPlate][decodedPlate]
+            for col,columnHeader in enumerate(barcodedCSV.columns):
+                includeInDecoding = True
+                for barcode in barcodes:
+                    if barcode.lower().replace(' ','') not in columnHeader.lower().replace(' ',''):
+                        includeInDecoding = False
+                if includeInDecoding:
+                    decodingIndices.append(col)
+            decodingIndices.append(-1)
+            decodedCSV = barcodedCSV.iloc[:,decodingIndices]
+            newColumns = []
+            for col,column in enumerate(decodedCSV.columns):
+                if col == 0:
+                    newColumns.append('')
+                elif col == len(decodedCSV.columns)-1:
+                    newColumns.append('')
+                else:
+                    populationStatisticSplit = column.split(' | ')
+                    population = populationStatisticSplit[0]
+                    splitPopulations = population.split('/')
+                    populationsToKeep = []
+                    for i,splitPopulation in enumerate(splitPopulations):
+                        keepPopulation = True
+                        for barcode in barcodes:
+                            if barcode.lower().replace(' ','') in splitPopulation.lower().replace(' ',''):
+                                keepPopulation = False
+                        if keepPopulation:
+                            populationsToKeep.append(splitPopulation)
+                    newColumn = ' | '.join(['/'.join(populationsToKeep),populationStatisticSplit[1]])
+                    newColumns.append(newColumn)
+            decodedCSV.columns = newColumns
+            decodedCSV.to_csv(path+decodedPlate+'_'+dataType+'.csv',index=False)
+
 def unpackMultiplexedPlates(experimentParameters,folderName,dataType):
     #A1->A1,A2->A2,A3- >A1,B1->A4,B2->A3
     #1.1,1.3,1.5,3.1,3.3,3.5 -> A1; 1.2,1.4,1.6,3.2,3.4,3.6->A2; 2.1,2.3,3.5,4.1,4.3,4.5->A4; 2.2,2.4,2.6,4.2,4.4,4.6->A3
@@ -67,35 +107,34 @@ def unpackMultiplexedPlates(experimentParameters,folderName,dataType):
                         wellIDs.append(wellID)
             plateIDConversionDict[multiplexedWellPos] = wellIDs
     #Specimen_001_A1_A01_001.fcs
-    if experimentParameters['multiplexingOption'] == '96->384 well':
-        multiplexedPlateNames = experimentParameters['unpackingDict'].keys()
-        #sortedMultiplexedData,sortedMultiplexedFiles = cleanUpFlowjoCSV(multiplexedPlateNames,folderName,dataType)
-        for multiplexedPlateName in multiplexedPlateNames:
-            multiplexedWellPoses = experimentParameters['unpackingDict'][multiplexedPlateName]
-            print(multiplexedWellPoses)
-            with open('inputData/bulkCSVFiles/'+multiplexedPlateName+'_'+dataType+'.csv', 'r') as f:
-                multiplexedCSVLines = f.readlines()
-            for multiplexedWellPos in multiplexedWellPoses:
-                if multiplexedWellPos != '':
-                    wellIDsInThisPos = plateIDConversionDict[multiplexedWellPos]
-                    linesToMove = []
-                    newCSVLines = []
-                    for lineNum,line in enumerate(multiplexedCSVLines):
-                        if lineNum in [0,len(multiplexedCSVLines)-2,len(multiplexedCSVLines)-1]:
-                            newCSVLines.append(line)
-                        else:
-                            fileName = line.split(',')[0]
-                            wellID = fileName.split('_')[2]
-                            #Well ID is in pos or first line or last two lines
-                            if wellID in wellIDsInThisPos:
-                                #underscorePoses = [pos for pos, char in enumerate(line) if char == '_']
-                                newWellID = wellIDConversionDict[wellID]
-                                newLine = line.replace(wellID,newWellID)
-                                newCSVLines.append(newLine)
-                    print(multiplexedWellPos)
-                    with open('inputData/bulkCSVFiles/'+multiplexedWellPos+'_'+dataType+'.csv', 'w') as f:
-                        for item in newCSVLines:
-                            f.write("%s" % item)
+    multiplexedPlateNames = experimentParameters['unpackingDict'].keys()
+    #sortedMultiplexedData,sortedMultiplexedFiles = cleanUpFlowjoCSV(multiplexedPlateNames,folderName,dataType)
+    for multiplexedPlateName in multiplexedPlateNames:
+        multiplexedWellPoses = experimentParameters['unpackingDict'][multiplexedPlateName]
+        print(multiplexedWellPoses)
+        with open('inputData/bulkCSVFiles/'+multiplexedPlateName+'_'+dataType+'.csv', 'r') as f:
+            multiplexedCSVLines = f.readlines()
+        for multiplexedWellPos in multiplexedWellPoses:
+            if multiplexedWellPos != '':
+                wellIDsInThisPos = plateIDConversionDict[multiplexedWellPos]
+                linesToMove = []
+                newCSVLines = []
+                for lineNum,line in enumerate(multiplexedCSVLines):
+                    if lineNum in [0,len(multiplexedCSVLines)-2,len(multiplexedCSVLines)-1]:
+                        newCSVLines.append(line)
+                    else:
+                        fileName = line.split(',')[0]
+                        wellID = fileName.split('_')[2]
+                        #Well ID is in pos or first line or last two lines
+                        if wellID in wellIDsInThisPos:
+                            #underscorePoses = [pos for pos, char in enumerate(line) if char == '_']
+                            newWellID = wellIDConversionDict[wellID]
+                            newLine = line.replace(wellID,newWellID)
+                            newCSVLines.append(newLine)
+                print(multiplexedWellPos)
+                with open('inputData/bulkCSVFiles/'+multiplexedWellPos+'_'+dataType+'.csv', 'w') as f:
+                    for item in newCSVLines:
+                        f.write("%s" % item)
 
 #If multiplexing option chosen
 def demultiplexSingleCellData(experimentParameters):
@@ -245,7 +284,9 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
             realDataType = dataType
         
         if 'multiplexingOption' in experimentParameters.keys():
-            if experimentParameters['multiplexingOption'] != 'None':
+            if 'Barcoding' in experimentParameters['multiplexingOption']:
+                decodeBarcodedPlates(experimentParameters,folderName,dataType)
+            if '96->384' in experimentParameters['multiplexingOption']:
                 unpackMultiplexedPlates(experimentParameters,folderName,dataType)
 
         #Legacy experiment parameter files compatibility

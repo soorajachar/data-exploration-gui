@@ -18,7 +18,6 @@ def produceSingleCellHeaders(cellTypes):
         newMultiIndexList.append([cellType])
     return newMultiIndexList
 
-
 def createTubeSingleCellDataFrame(folderName,fileNameDf):
     fileNameDf = fileNameDf.stack()
     dflist = []
