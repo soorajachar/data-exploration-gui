@@ -58,28 +58,19 @@ class ExperimentSetupStartPage(tk.Frame):
                     experimentParameters = json.load(open('misc/experimentParameters-'+folderName+'.json','r'))
             else:
                 experimentParameters = json.load(open('misc/experimentParameters-'+folderName+'-'+v3.get()+'.json','r'))
-            print(experimentParameters)
             if 'format' not in experimentParameters.keys():
                 experimentParameters['format'] = 'plate'
             if experimentParameters['format'] == 'plate':
-                if 'paired' in experimentParameters.keys():
-                    if experimentParameters['paired']:
-                        numRowPlates = 2
-                    else:
-                        numRowPlates = 1
-                    numColumnPlates = int(experimentParameters['numPlates']/numRowPlates)
-                else:
-                    numRowPlates = experimentParameters['numRowPlates'] 
-                    numColumnPlates = experimentParameters['numColumnPlates']
-                levels = experimentParameters['allLevelNames']
-                conditionLevelValues = experimentParameters['conditionLevelValues']
                 plateDimensions = experimentParameters['overallPlateDimensions']
+                levelLabelDict = experimentParameters['levelLabelDict']
+                conditionLevelValues = levelLabelDict.copy()
+                del levelLabelDict.copy()[list(levelLabelDict.keys())[-1]]
                 levelValues = []
-                for level in levels:
-                    levelValues.append(experimentParameters['allLevelValues'][level])
+                for level in experimentParameters['levelLabelDict']:
+                    levelValues.append(experimentParameters['levelLabelDict'][level])
                 maxNumLevelValues = len(max(levelValues,key=len))
-
-                master.switch_frame(BlankSelectionPage,folderName,levels,levelValues,maxNumLevelValues,numRowPlates,numColumnPlates,plateDimensions,v3.get(),ExperimentSetupStartPage,bPage)
+                levels = list(experimentParameters['levelLabelDict'].keys())
+                master.switch_frame(BlankSelectionPage,folderName,levels,levelValues,maxNumLevelValues,experimentParameters['numPlates'],plateDimensions,v3.get(),ExperimentSetupStartPage,bPage)
             #Tube mode
             else:
                 master.switch_frame(TubeLayoutPage,folderName,experimentParameters['conditionLevelValues'],experimentParameters['columnLevelValues'],experimentParameters['numSamples'],experimentParameters['numericLevels'],experimentParameters['allLevelNames'],v3.get(),ExperimentSetupStartPage,bPage)
@@ -191,15 +182,10 @@ class PlateExperimentParameterPage(tk.Frame):
         rb3b.grid(row=0,column=2)
         v3.set(96)
 
-        l4 = tk.Label(mainWindow, text="How many plates was a single timepoint's conditions spread over (rowPlates)?")
+        l4 = tk.Label(mainWindow, text="How many plates were used in the experiment?")
         e0 = tk.Entry(mainWindow)
         l4.grid(row=1,column=0)
         e0.grid(row=1,column=1)
-        
-        l5 = tk.Label(mainWindow, text="How many plates was a single condition's timepoints spread over (columnPlates)?")
-        e1 = tk.Entry(mainWindow)
-        l5.grid(row=2,column=0)
-        e1.grid(row=2,column=1)
 
         l6 = tk.Label(mainWindow, text="Enter the number of condition levels (excluding Time): ")
         e2 = tk.Entry(mainWindow)
@@ -210,10 +196,6 @@ class PlateExperimentParameterPage(tk.Frame):
         multiplex = tk.StringVar(value='None')
         plateMultiplexVar = tk.BooleanVar() 
         barcodeMultiplexVar = tk.BooleanVar() 
-        #rb1 = tk.Radiobutton(mainWindow,variable=multiplex,value='None',text='None')
-        #rb2 = tk.Radiobutton(mainWindow,variable=multiplex,value='96->384 well',text='96->384 well')
-        #rb3 = tk.Radiobutton(mainWindow,variable=multiplex,value='Barcoding',text='Barcoding')
-        #rb4 = tk.Radiobutton(mainWindow,variable=multiplex,value='96->384 well + Barcoding',text='96->384 well + Barcoding')
         plateMultiplexCb = tk.Checkbutton(mainWindow,text='96->384 well',variable=plateMultiplexVar,onvalue=True,offvalue=False)
         barcodeMultiplexCb = tk.Checkbutton(mainWindow,text='Barcoding',variable=barcodeMultiplexVar,onvalue=True,offvalue=False)
         barcodingNumberLabel = tk.Label(mainWindow,text='# plates per barcoded plate') 
@@ -224,15 +206,9 @@ class PlateExperimentParameterPage(tk.Frame):
         barcodeMultiplexCb.grid(row=4,column=2)
         barcodingNumberLabel.grid(row=4,column=3)
         barcodingNumberEntry.grid(row=4,column=4)
-        #rb1.grid(row=4,column=1)
-        #rb2.grid(row=4,column=2)
-        #rb3.grid(row=4,column=3)
-        #rb4.grid(row=4,column=4)
          
         def collectInputs():
-            experimentParameters['numPlates'] = int(e0.get())*int(e1.get())
-            experimentParameters['numRowPlates'] = int(e0.get())
-            experimentParameters['numColumnPlates'] = int(e1.get())
+            experimentParameters['numPlates'] = int(e0.get())
             experimentParameters['numAllLevels'] = int(e2.get())+1
             if v3.get() == 384:
                 experimentParameters['overallPlateDimensions'] = [16,24]
@@ -252,11 +228,14 @@ class PlateExperimentParameterPage(tk.Frame):
                     numberOfBarcodes = int(barcodingNumberEntry.get())
                 else:
                     multiplexingOption = 'None'
-            #multiplexingOption = multiplex.get()
+            global globalMultiplexingVar
+            globalMultiplexingVar = multiplexingOption
             experimentParameters['multiplexingOption'] = multiplexingOption
             if multiplexingOption == '96->384 well':
                 master.switch_frame(MultiplexingPage,multiplexingOption)
             elif multiplexingOption == '96->384 well + Barcoding':
+                master.switch_frame(BarcodingPage,multiplexingOption,numberOfBarcodes)
+            elif multiplexingOption == 'Barcoding':
                 master.switch_frame(BarcodingPage,multiplexingOption,numberOfBarcodes)
             else:
                 master.switch_frame(allLevelNamePage,folderName)
@@ -282,8 +261,13 @@ class BarcodingPage(tk.Frame):
             maxNumBarcoded = math.ceil(experimentParameters['numPlates'] / numberOfBarcodedPlates)
         l1 = tk.Label(BarcodingWindow,text='Barcoded Plate Name:')
         l2 = tk.Label(BarcodingWindow,text='Plate Name:')
+        entryBarcodeLabelList = []
         for barcode in range(numberOfBarcodes):
-            tk.Label(BarcodingWindow,text='Barcode '+str(barcode+1)).grid(row=0,column=2+barcode)
+            e = tk.Entry(BarcodingWindow,width=8)
+            e.grid(row=0,column=2+barcode)
+            e.insert(tk.END, 'Barcode '+str(barcode+1))
+            entryBarcodeLabelList.append(e)
+            #tk.Label(BarcodingWindow,text='Barcode '+str(barcode+1)).grid(row=0,column=2+barcode)
         l1.grid(row=0,column=0)
         l2.grid(row=0,column=1)
         allIndividualPlateEntryList = []
@@ -326,7 +310,7 @@ class BarcodingPage(tk.Frame):
                                     barcodeSymbol = '+'
                                 else:
                                     barcodeSymbol = '-'
-                                barcodingStringList.append('Barcode '+str(barcodeIndex+1)+barcodeSymbol)
+                                barcodingStringList.append(entryBarcodeLabelList[barcodeIndex].get()+barcodeSymbol)
                             plateBarcodingDict[plateEntry.get()] = barcodingStringList
                     barcodingDict[combinedEntry.get()] = plateBarcodingDict
             experimentParameters['barcodingDict'] = barcodingDict
@@ -610,14 +594,36 @@ class conditionLevelValuesPage(tk.Frame):
             experimentParameters['conditionLevelValues'] = conditionLevels.copy()
             experimentParameters['allLevelValues'] = conditionLevels.copy()
             experimentParameters['allLevelValues'][experimentParameters['columnVariableName']] = experimentParameters['columnLevelValues']
+            shortenedExperimentParameters = {}
+            for keyToKeep in ['format','numPlates','overallPlateDimensions','barcodingDict','unpackingDict']:
+                if keyToKeep in list(experimentParameters.keys()):
+                    shortenedExperimentParameters[keyToKeep] = experimentParameters[keyToKeep]
+            shortenedExperimentParameters['levelLabelDict'] = experimentParameters['allLevelValues']
             if dataType == 'both':
                 with open('misc/experimentParameters-'+folderName+'-cell.json', 'w') as fp:
-                    json.dump(experimentParameters, fp)
+                    json.dump(shortenedExperimentParameters, fp)
                 with open('misc/experimentParameters-'+folderName+'-cyt.json', 'w') as fp:
-                    json.dump(experimentParameters, fp)
+                    json.dump(shortenedExperimentParameters, fp)
             else:
                 with open('misc/experimentParameters-'+folderName+'-'+dataType+'.json', 'w') as fp:
-                    json.dump(experimentParameters, fp)
+                    json.dump(shortenedExperimentParameters, fp)
+            #{"A1-12": {"A1-4": ["Barcode 1-", "Barcode 2-"], "A5-8": ["Barcode 1+", "Barcode 2-"], "A9-12": ["Barcode 1-", "Barcode 2+"]}}
+            #{"A1-4": ["A1", "A2", "A4", "A3"], "A5-8": ["A5", "A6", "A8", "A7"], "A9-12": ["A9", "A10", "A12", "A11"]}
+            if dataType == 'both' or dataType == 'cell':
+                #Both
+                if '+' in globalMultiplexingVar:
+                    for plate in experimentParameters['barcodingDict']:
+                        subprocess.run(['mkdir','inputData/singleCellCSVFiles/'+plate])
+                else:
+                    if 'Barcoding' in globalMultiplexingVar:
+                        for plate in experimentParameters['barcodingDict']:
+                            subprocess.run(['mkdir','inputData/singleCellCSVFiles/'+plate])
+                    elif '96' in globalMultiplexingVar:
+                        for plate in experimentParameters['unpackingDict']:
+                            subprocess.run(['mkdir','inputData/singleCellCSVFiles/'+plate])
+                    else:
+                        for plateNum in range(1,experimentParameters['numPlates']+1):
+                            subprocess.run(['mkdir','inputData/singleCellCSVFiles/A'+str(plateNum)])
             master.switch_frame(ExperimentSetupStartPage,folderName,backPage)
 
         buttonWindow = Frame(self)

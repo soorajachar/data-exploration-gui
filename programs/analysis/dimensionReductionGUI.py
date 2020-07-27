@@ -77,14 +77,12 @@ class DimensionReductionHomePage(tk.Frame):
         v2.set('umap')
         rb2a = tk.Radiobutton(mainWindow,text="umap",padx = 20, variable=v2, value='umap')
         rb2b = tk.Radiobutton(mainWindow,text="tsne",padx = 20, variable=v2, value='tsne')
-        rb2c = tk.Radiobutton(mainWindow,text="FItSNE",padx = 20, variable=v2, value='FItSNE')
         rb2d = tk.Radiobutton(mainWindow,text="isomap",padx = 20, variable=v2, value='isomap')
         rb2e = tk.Radiobutton(mainWindow,text="pca",padx = 20, variable=v2, value='pca')
         rb2a.grid(row=1,column=1,sticky=tk.W)
         rb2b.grid(row=2,column=1,sticky=tk.W)
-        rb2c.grid(row=3,column=1,sticky=tk.W)
-        rb2d.grid(row=4,column=1,sticky=tk.W)
-        rb2e.grid(row=5,column=1,sticky=tk.W)
+        rb2d.grid(row=3,column=1,sticky=tk.W)
+        rb2e.grid(row=4,column=1,sticky=tk.W)
         
         """
         l1 = tk.Label(mainWindow, text="Select Preprocessed Data Subset: ").grid(row=0,column=0,sticky=tk.W)

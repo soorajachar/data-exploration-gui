@@ -111,7 +111,6 @@ def unpackMultiplexedPlates(experimentParameters,folderName,dataType):
     #sortedMultiplexedData,sortedMultiplexedFiles = cleanUpFlowjoCSV(multiplexedPlateNames,folderName,dataType)
     for multiplexedPlateName in multiplexedPlateNames:
         multiplexedWellPoses = experimentParameters['unpackingDict'][multiplexedPlateName]
-        print(multiplexedWellPoses)
         with open('inputData/bulkCSVFiles/'+multiplexedPlateName+'_'+dataType+'.csv', 'r') as f:
             multiplexedCSVLines = f.readlines()
         for multiplexedWellPos in multiplexedWellPoses:
@@ -131,7 +130,6 @@ def unpackMultiplexedPlates(experimentParameters,folderName,dataType):
                             newWellID = wellIDConversionDict[wellID]
                             newLine = line.replace(wellID,newWellID)
                             newCSVLines.append(newLine)
-                print(multiplexedWellPos)
                 with open('inputData/bulkCSVFiles/'+multiplexedWellPos+'_'+dataType+'.csv', 'w') as f:
                     for item in newCSVLines:
                         f.write("%s" % item)
@@ -189,7 +187,7 @@ def demultiplexSingleCellData(experimentParameters):
                     indexList.append(fileNameColumn.iloc[row].split('_')[2])
                 fileIndex = indexList.index(newSampleID)
                 trueFileName = newFileName.split('_')[0]+'_'+fileNameColumn.iloc[fileIndex][:-4]+'_'+populationName+'.csv'
-                print(newFileName+'->'+trueFileName)
+                #print(newFileName+'->'+trueFileName)
                 fileNameDict['_'.join(trueFileName.split('_')[1:-1])] = '_'.join(fileName.split('_')[1:-1])
                 completeNewFileName = unpackedFolder+'/'+populationName+'/'+trueFileName
                 subprocess.run(['cp','inputData/singleCellCSVFiles/'+combinedPlateName+'/'+populationName+'/'+fileName,'inputData/singleCellCSVFiles/'+completeNewFileName])
@@ -208,6 +206,7 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
     if experimentParameters['format'] == 'tube':
         fullFormatDf = pickle.load(open('misc/tubeLayout-'+folderName+'-cell.pkl','rb'))
         dfList = []
+        levelLabelDict = experimentParameters['levelLabelDict']
         for fileName in os.listdir('inputData/bulkCSVFiles/'):
             if '.csv' in fileName:
                 performCommaCheck(fileName)
@@ -228,7 +227,7 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
                 
                 timeDataList = []
                 timeSubsets = []
-                times = experimentParameters['columnLevelValues']
+                times = levelLabelDict[list(levelLabelDict.keys())[-1]]
 
                 #Can use sample name file to assign time values
                 if 'sampleNameFile.xlsx' in os.listdir('misc') or 'sampleNameFile.csv' in os.listdir('misc'):
@@ -240,7 +239,7 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
                         for time in times:
                             timeIndices = []
                             for row in range(sampleNameDf.shape[0]):
-                                if sampleNameDf[experimentParameters['columnVariableName']].values[row] == time:
+                                if sampleNameDf[list(levelLabelDict.keys())[-1]].values[row] == time:
                                     timeIndices.append(row)
                             timeSubsets.append(timeIndices)
                     #Otherwise just assume 1 timepoint (HACK NEED TO FIX EVENTUALLY)
@@ -260,7 +259,7 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
                     fullExperimentDf = pd.concat(dataList,keys=columnTupleList,names=['CellType','Marker','Statistic'])
                     timeDataList.append(fullExperimentDf)
                 
-                k = pd.concat(timeDataList,keys=times,names=[experimentParameters['columnVariableName']])
+                k = pd.concat(timeDataList,keys=times,names=[list(levelLabelDict.keys())[-1]])
                 repeatList = []
                 for name in k.index:
                     if name not in repeatList:
@@ -268,7 +267,7 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
                     else:
                         print('Repeated:')
                         print(name)
-                partialExperimentDf = pd.concat(timeDataList,keys=times,names=[experimentParameters['columnVariableName']]).unstack(experimentParameters['columnVariableName'])
+                partialExperimentDf = pd.concat(timeDataList,keys=times,names=[list(levelLabelDict.keys())[-1]]).unstack(list(levelLabelDict.keys())[-1])
                 dfList.append(partialExperimentDf)
 
         fullExperimentDf = pd.concat(dfList)
@@ -276,7 +275,6 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
         if dataType == 'singlecell':
             realDataType = 'singlecell'
             dataType = 'cell'
-            print(experimentParameters)
             if 'multiplexingOption' in experimentParameters:
                 if experimentParameters['multiplexingOption'] != 'None':
                     demultiplexSingleCellData(experimentParameters)
@@ -297,8 +295,8 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
                 numRowPlates = 1
             numColumnPlates = int(experimentParameters['numPlates']/numRowPlates)
         else:
-            numRowPlates = experimentParameters['numRowPlates'] 
-            numColumnPlates = experimentParameters['numColumnPlates']
+            numRowPlates = 1 
+            numColumnPlates = experimentParameters['numPlates']
 
         #Combine plate and well IDs into a single ID val for every single sample in the experiment
         identificationMatrix = np.empty(layoutDict['plateID'].shape,dtype=object)
@@ -310,12 +308,14 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
                 identificationMatrix[row,col] = fullID
 
         plateNames = np.unique(layoutDict['plateID'])
-
+        
+        levelLabelDict = experimentParameters['levelLabelDict']
         plateDimensions = experimentParameters['overallPlateDimensions'] 
-        levels = experimentParameters['allLevelNames']
-        conditionLevels = experimentParameters['conditionLevelNames']
-        conditionLevelValues = experimentParameters['conditionLevelValues']
-        allLevelValues = experimentParameters['allLevelValues']
+        levels = list(levelLabelDict.keys())
+        conditionLevels = list(levelLabelDict.keys())[:-1]
+        conditionLevelValues = levelLabelDict.copy()
+        del conditionLevelValues[list(levelLabelDict.keys())[-1]]
+        allLevelValues = experimentParameters['levelLabelDict']
 
         sortedData,sortedFiles = cleanUpFlowjoCSV(plateNames,folderName,dataType,experimentParameters)
         allRawData,newLevelList = returnMultiIndex(sortedData,sortedFiles,realDataType,folderName)
@@ -361,19 +361,6 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
 
         idx=pd.IndexSlice 
         fullExperimentDf = pd.concat(dfList)
-        """
-        fullExperimentDf = pd.Series(np.nan_to_num(fullExperimentDf.values),index=fullExperimentDf.index)
-        dflist = []
-        for i in pd.unique(fullExperimentDf.index.get_level_values('Time')):
-            if i != 77.0:
-                dflist.append(fullExperimentDf.loc[idx[:,:,:,i]]+i)
-            else:
-                dflist.append(fullExperimentDf.loc[idx[:,:,:,i]])
-        fullExperimentDf = pd.concat(dflist,keys=list(pd.unique(fullExperimentDf.index.get_level_values('Time'))),names=['Time'],axis=1)
-        print(fullExperimentDf)
-        print(fullExperimentDf[fullExperimentDf.index.duplicated()])
-        print('wat') 
-        """
         #dfl = [fullExperimentDf.xs([12.0],level=['Time']),fullExperimentDf.xs([60.0],level=['Time']),fullExperimentDf.xs([96.0],level=['Time']),fullExperimentDf.xs([156.0],level=['Time'])]
         tempdf = fullExperimentDf.to_frame('temp')
         temp = []
@@ -398,7 +385,7 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
                 temp.append(name)
             else:
                 temp2.append(name)
-        fullExperimentDf = fullExperimentDf.unstack(experimentParameters['columnVariableName'])
+        fullExperimentDf = fullExperimentDf.unstack(list(levelLabelDict.keys())[-1])
     
     fullExperimentDf = reorderDfByInputOrder(experimentParameters,fullExperimentDf)
     return fullExperimentDf

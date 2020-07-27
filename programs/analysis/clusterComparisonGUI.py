@@ -179,7 +179,7 @@ class ClusterComparisonPage(tk.Frame):
                         experimentParameters = json.load(open('misc/experimentParameters-'+folderName+'-'+dataType+'.json','r'))
                         break
         if experimentParametersBool:
-            trueLabelDict = experimentParameters['allLevelValues'] 
+            trueLabelDict = experimentParameters['levelLabelDict'] 
         else:
             if 'Event' in scaledData.index.names or 'event' in scaledData.index.names:
                 h5FileBool = False
@@ -198,7 +198,7 @@ class ClusterComparisonPage(tk.Frame):
                 originalDf = scaledData.copy()
             trueLabelDict = createLabelDict(originalDf)
             with open('misc/experimentParameters-'+folderName+'-cell.json', 'w') as fp:
-                json.dump({'allLevelValues':trueLabelDict}, fp)
+                json.dump({'levelLabelDict':trueLabelDict}, fp)
 
         figheight = 5 
         figwidth = 5

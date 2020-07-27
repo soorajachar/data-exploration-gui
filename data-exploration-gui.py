@@ -78,13 +78,17 @@ class ExperimentSelectionPage(tk.Frame):
         self.projectMenu = tkinter.ttk.Combobox(mainWindow,values = projects)
         if len(self.pathDict) > 0:
             self.projectMenu['width'] = len(max(projects,key=len))
-        tk.Label(mainWindow,text='Project name: ').grid(row=4,column=1)
-        self.projectMenu.grid(row=4,column=2,sticky=tk.W)
+        tk.Label(mainWindow,text='Project name: ').grid(row=5,column=0)
+        self.projectMenu.grid(row=6,column=0)
+        #tk.Label(mainWindow,text='Project name: ').grid(row=4,column=1)
+        #self.projectMenu.grid(row=4,column=2,sticky=tk.W)
         self.projectMenu.bind('<<ComboboxSelected>>', getUpdateData)
 
         self.experimentMenu = tkinter.ttk.Combobox(mainWindow)
-        tk.Label(mainWindow,text='Experiment name: ').grid(row=5,column=1,sticky=tk.W)
-        self.experimentMenu.grid(row=5,column=2)
+        tk.Label(mainWindow,text='Experiment name: ').grid(row=7,column=0)
+        self.experimentMenu.grid(row=8,column=0)
+        #tk.Label(mainWindow,text='Experiment name: ').grid(row=5,column=1,sticky=tk.W)
+        #self.experimentMenu.grid(row=5,column=2)
 
         def collectInput():
             action = v.get()
@@ -102,7 +106,7 @@ class ExperimentSelectionPage(tk.Frame):
                 master.switch_frame(ExperimentActionWindow,selectedExperiment)
 
         buttonWindow = tk.Frame(self)
-        buttonWindow.pack(side=tk.TOP,padx=10,pady=10)
+        buttonWindow.pack(side=tk.TOP,padx=10,pady=(50,10))
         tk.Button(buttonWindow, text="OK",command=lambda: collectInput()).pack(side=tk.LEFT)
         tk.Button(buttonWindow, text="Quit",command=lambda: quit()).pack(side=tk.LEFT)
 

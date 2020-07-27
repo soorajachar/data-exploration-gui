@@ -143,18 +143,13 @@ def parseCommandLineNNString(inputString):
         return experimentNumbers
 
 def reorderDfByInputOrder(experimentParameters,df):
-    levelDict = experimentParameters['allLevelValues']
-    print(levelDict)
-    a = levelDict.pop(experimentParameters['columnVariableName'])
-    print(levelDict)
+    print(experimentParameters)
+    levelDict = experimentParameters['levelLabelDict'].copy()
+    del levelDict[list(levelDict.keys())[-1]]
     levels = list(levelDict.keys())
-    print(levels)
-    print(df) 
     for level in levels:
-        experimentParameterOrderLevelValues = experimentParameters['conditionLevelValues'][level]
+        experimentParameterOrderLevelValues = levelDict[level] 
         df = df.reindex(experimentParameterOrderLevelValues,level=level)
-    print(df)
-    print('wat')
     return df
 
 #used for nonlexographic sort reindexing

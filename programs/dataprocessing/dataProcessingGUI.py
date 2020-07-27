@@ -113,16 +113,12 @@ def dataProcessingMaster(folderName,expNum,dataType,ex_data):
     else:
         parameterExtension = dataType
     experimentParameters = json.load(open('misc/experimentParameters-'+folderName+'-'+parameterExtension+'.json','r'))
-    if 'format' in experimentParameters.keys():
-        if experimentParameters['format'] == 'plate':
-            experimentFormat = 'plate'
-            experimentLevelLayoutDict = pickle.load(open('misc/layoutDict-'+folderName+'-'+parameterExtension+'.pkl','rb'))
-        else:
-            experimentFormat = 'tube'
-            experimentLevelLayoutDict = pickle.load(open('misc/tubeLayout-'+folderName+'-'+parameterExtension+'.pkl','rb'))
-    else:
+    if experimentParameters['format'] == 'plate':
         experimentFormat = 'plate'
-        experimentLevelLayoutDict = pickle.load(open('misc/layoutDict-'+folderName+'.pkl','rb'))
+        experimentLevelLayoutDict = pickle.load(open('misc/layoutDict-'+folderName+'-'+parameterExtension+'.pkl','rb'))
+    else:
+        experimentFormat = 'tube'
+        experimentLevelLayoutDict = pickle.load(open('misc/tubeLayout-'+folderName+'-'+parameterExtension+'.pkl','rb'))
     #experimentLevelLayoutDict = idp.tilePlateLayouts(experimentParameters,levelLayouts)
     if(dataType == 'cyt'):
         calibrationParameters = json.load(open('misc/CBAcalibrationParameters-'+folderName+'.json','r'))

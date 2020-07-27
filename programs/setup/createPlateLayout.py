@@ -139,7 +139,9 @@ def returnBaseLayout(plateDimensions,conditionPlateRows,timepointPlateColumns):
     return pointDf,infoDf,vlineList,hlineList
 
 class BlankSelectionPage(tk.Frame):
-    def __init__(self, master,folderName,levels,levelValues,maxNumLevelValues,numRowPlates,numColumnPlates,plateDimensions,dt,shp,bPage):
+    def __init__(self, master,folderName,levels,levelValues,maxNumLevelValues,numPlates,plateDimensions,dt,shp,bPage):
+        numRowPlates = 1
+        numColumnPlates = numPlates
         if numRowPlates == 1 and numColumnPlates > colwrap:
             colwrapBool = True
         else:

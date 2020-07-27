@@ -34,13 +34,13 @@ def createLabelDictWithExperimentParameters(df,experimentParameters):
         if levelName in ['Event','event']:
             pass
         else:
-            if levelName in experimentParameters['allLevelValues'].keys():
+            if levelName in experimentParameters['levelLabelDict'].keys():
                 #tempList = []
                 #for levelVal in experimentParameters['allLevelValues'][levelName]:
                 #    if levelVal in list(pd.unique(fulldf.index.get_level_values(levelName))):
                 #        tempList.append(levelVal)
                 #labelDict[levelName] = tempList 
-                labelDict[levelName] = experimentParameters['allLevelValues'][levelName]
+                labelDict[levelName] = experimentParameters['levelLabelDict'][levelName]
             else:
                 labelDict[levelName] = list(pd.unique(fulldf.index.get_level_values(levelName)))
     return labelDict
@@ -460,7 +460,7 @@ class plotElementsGUIPage(tk.Frame):
                 levelValues = list(pd.unique(stackedDf.index.get_level_values(level)))
                 tempDict[level] = levelValues
             experimentParameters = {}
-            experimentParameters['allLevelValues'] = tempDict
+            experimentParameters['levelLabelDict'] = tempDict
         """ 
         global dataType
         if 'cell' in pickleFileName: 
@@ -579,7 +579,7 @@ class plotElementsGUIPage(tk.Frame):
             useModifiedDf = False
             sName = titleEntry.get()
             subsettedDfList,subsettedDfListTitles,figureLevels,levelValuesPlottedIndividually = fpl.produceSubsettedDataFrames(experimentDf.stack().to_frame('temp'),fullFigureLevelBooleanList,includeLevelValueList,self.tld)
-            fpl.plotFacetedFigures(folderName,plotType,subPlotType,dataType,subsettedDfList,subsettedDfListTitles,figureLevels,levelValuesPlottedIndividually,useModifiedDf,experimentDf,plotOptions,parametersSelected,addDistributionPoints,originalLevelValueOrders=experimentParameters['allLevelValues'],subfolderName=sName,context=ipe.getRadiobuttonValues(contextRadiobuttonVarsDict)['context'],height=float(heightEntry.get()),aspect=float(widthEntry.get()),titleBool=ipe.getRadiobuttonValues(plotTitleRadiobuttonVarsDict)['plotTitle'],colwrap=int(colWrapEntry.get()),legendBool=ipe.getRadiobuttonValues(legendRadiobuttonVarsDict)['legend'],outlierBool=ipe.getRadiobuttonValues(outlierRadiobuttonVarsDict)['remove outliers'],plotAllVar=plotAllVar,titleAdjust=titleAdjustEntry.get(),plotSpecificDict = plotSpecificDict)
+            fpl.plotFacetedFigures(folderName,plotType,subPlotType,dataType,subsettedDfList,subsettedDfListTitles,figureLevels,levelValuesPlottedIndividually,useModifiedDf,experimentDf,plotOptions,parametersSelected,addDistributionPoints,originalLevelValueOrders=experimentParameters['levelLabelDict'],subfolderName=sName,context=ipe.getRadiobuttonValues(contextRadiobuttonVarsDict)['context'],height=float(heightEntry.get()),aspect=float(widthEntry.get()),titleBool=ipe.getRadiobuttonValues(plotTitleRadiobuttonVarsDict)['plotTitle'],colwrap=int(colWrapEntry.get()),legendBool=ipe.getRadiobuttonValues(legendRadiobuttonVarsDict)['legend'],outlierBool=ipe.getRadiobuttonValues(outlierRadiobuttonVarsDict)['remove outliers'],plotAllVar=plotAllVar,titleAdjust=titleAdjustEntry.get(),plotSpecificDict = plotSpecificDict)
             
         titleWindow = tk.Frame(self)
         titleWindow.pack(side=tk.TOP,pady=10)
