@@ -311,8 +311,16 @@ class BarcodingPage(tk.Frame):
                                 else:
                                     barcodeSymbol = '-'
                                 barcodingStringList.append(entryBarcodeLabelList[barcodeIndex].get()+barcodeSymbol)
-                            plateBarcodingDict[plateEntry.get()] = barcodingStringList
-                    barcodingDict[combinedEntry.get()] = plateBarcodingDict
+                            if '_cyt' in plateEntry.get():
+                                uncombinedPlateName = plateEntry.get()[:-4]
+                            elif '_cell' in plateEntry.get():
+                                uncombinedPlateName = plateEntry.get()[:-5]
+                            plateBarcodingDict[uncombinedPlateName] = barcodingStringList
+                    if '_cyt' in combinedEntry.get():
+                        combinedPlateName = combinedEntry.get()[:-4]
+                    elif '_cell' in combinedEntry.get():
+                        combinedPlateName = combinedEntry.get()[:-5]
+                    barcodingDict[combinedPlateName] = plateBarcodingDict
             experimentParameters['barcodingDict'] = barcodingDict
             if multiplexingOption == '96->384 well + Barcoding':
                 master.switch_frame(MultiplexingPage,multiplexingOption)

@@ -365,10 +365,12 @@ def createLayoutVisual(baseLayoutDf,currentLayout,levelIndex,currentLevel,levelV
         if i in list(pd.unique(newLayoutDf['key'])):
             hueorder.append(i)
             modifiedPalette.append(currentpalette[i+1])
+    blanksExist = False 
     for i,val in enumerate(newLayoutDf['key']):
         if val == 'blank':
             newLayoutDf['key'].iloc[i] = -1
             newLayoutDf['blank'].iloc[i] = -1
+            blanksExist = True
         else:
             newLayoutDf['blank'].iloc[i] = 0 
     g1 = sns.scatterplot(data=newLayoutDf,x='x',y='y',ax=fig_ax1,hue='key',hue_order=hueorder,palette=modifiedPalette,s=200,markers=['X','o'],alpha=0.5,style='blank',style_order=[-1,0])
@@ -387,6 +389,10 @@ def createLayoutVisual(baseLayoutDf,currentLayout,levelIndex,currentLevel,levelV
     newLegendHandles = []
     legendHandles = legendHandlesLabels[0]
     currentLevelValues = levelValues[levelIndex]
+    if blanksExist:
+        offset = 1
+    else:
+        offset = 0
     for legendHandle in legendHandles:
         #Skips the style legend handles
         if i < len(currentLevelValues)+1:
@@ -396,7 +402,7 @@ def createLayoutVisual(baseLayoutDf,currentLayout,levelIndex,currentLevel,levelV
                 newLegendHandles.append(legendHandle)
             else:
                 newLegendLabels.append(currentLevelValues[i-1])
-                newLegendHandles.append(legendHandles[i])
+                newLegendHandles.append(legendHandles[i+offset])
         i+=1
     fig_ax1.legend(bbox_to_anchor=(1, 1),frameon=False,handles=newLegendHandles, labels=newLegendLabels)
     plt.savefig('plots/plateLayouts/plateLayout-'+currentLevel+'-'+dt+'.png',bbox_inches='tight')
@@ -960,5 +966,5 @@ class PlateLayoutPage(tk.Frame):
         self.FinishButton.grid(row=0,column=0)
         self.FinishButton['state'] = 'disabled'
         #(self, master,folderName,levels,levelValues,maxNumLevelValues,numRowPlates,numColumnPlates,plateDimensions,dataType,shp)
-        tk.Button(buttonWindow, text="Back",command=lambda: master.switch_frame(BlankSelectionPage,folderName,levels,levelValues,maxNumLevelValues,numRowPlates,numColumnPlates,plateDimensions,dataType,secondaryhomepage,backPage)).grid(row=0,column=1)
+        tk.Button(buttonWindow, text="Back",command=lambda: master.switch_frame(BlankSelectionPage,folderName,levels,levelValues,maxNumLevelValues,numColumnPlates,plateDimensions,dataType,secondaryhomepage,backPage)).grid(row=0,column=1)
         tk.Button(buttonWindow, text="Quit",command=lambda: quit()).grid(row=0,column=2)
