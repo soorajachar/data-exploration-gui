@@ -283,7 +283,7 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
         
             if 'barcodingDict' in list(experimentParameters.keys()):
                 decodeBarcodedPlates(experimentParameters,folderName,dataType)
-            if '96->384' in list(experimentParameters.keys()):
+            if 'unpackingDict' in list(experimentParameters.keys()):
                 unpackMultiplexedPlates(experimentParameters,folderName,dataType)
 
         #Legacy experiment parameter files compatibility
