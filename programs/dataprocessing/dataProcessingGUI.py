@@ -66,20 +66,20 @@ class DataProcessingStartPage(tk.Frame):
 
         cellDfButton = tk.Button(mainWindow,text='Create dataframes',command=lambda: createDataFrame('cell'))
         cellDfButton.grid(row=2,column=1,sticky=tk.W)
-        cellAbPanelButton = tk.Button(mainWindow,text='Edit antibody panel',command=lambda: master.switch_frame(cdp.MarkerNumberPage,folderName,expNum,ex_data,DataProcessingStartPage,bPage))
-        cellAbPanelButton.grid(row=2,column=2,sticky=tk.W)
+        #cellAbPanelButton = tk.Button(mainWindow,text='Edit antibody panel',command=lambda: master.switch_frame(cdp.MarkerNumberPage,folderName,expNum,ex_data,DataProcessingStartPage,bPage))
+        #cellAbPanelButton.grid(row=2,column=2,sticky=tk.W)
         
         prolifDfButton = tk.Button(mainWindow,text='Create dataframes',command=lambda: createDataFrame('prolif'))
         prolifDfButton.grid(row=3,column=1,sticky=tk.W)
         prolifGenerationGatesButton = tk.Button(mainWindow,text='Edit generation gates',command=lambda: master.switch_frame(pdp.GatingPage,folderName,expNum,ex_data,DataProcessingStartPage,bPage))
         prolifGenerationGatesButton.grid(row=3,column=2,sticky=tk.W)
 
-        completeSingleCellDfButton = tk.Button(mainWindow,text='Create complete dataframes')
-        completeSingleCellDfButton.grid(row=4,column=2,sticky=tk.W)
-        singleCellDfButton = tk.Button(mainWindow,text='Create intial dataframes',command=lambda: createDataFrame('singlecell'))
+        #completeSingleCellDfButton = tk.Button(mainWindow,text='Create complete dataframes')
+        #completeSingleCellDfButton.grid(row=4,column=2,sticky=tk.W)
+        singleCellDfButton = tk.Button(mainWindow,text='Create dataframes',command=lambda: createDataFrame('singlecell'))
         singleCellDfButton.grid(row=4,column=1,sticky=tk.W)
 
-        for i,button in enumerate([cytDfButton,cellDfButton,prolifDfButton,prolifGenerationGatesButton,singleCellDfButton,completeSingleCellDfButton]):
+        for i,button in enumerate([cytDfButton,cellDfButton,prolifDfButton,prolifGenerationGatesButton,singleCellDfButton]):
             if i == 0:
                 requiredFiles = ['CBAcalibrationParameters-'+folderName+'.json']
             elif i == 1:
