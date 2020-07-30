@@ -281,7 +281,7 @@ class selectLevelValuesPage(tk.Frame):
         includeLevelValueList = []
         
         labelWindow = tk.Frame(self)
-        labelWindow.pack(side=tk.TOP,padx=10,fill=t20200309-Human-CAR-T_4/k.X,expand=True)
+        labelWindow.pack(side=tk.TOP,padx=10,fill=tk.X,expand=True)
         
         l1 = tk.Label(labelWindow, text='Which specific level values do you want to include in the figure?',pady=10).grid(row=0,column = 0,columnspan=len(trueLabelDict)*6)
         levelValueCheckButtonList = []
