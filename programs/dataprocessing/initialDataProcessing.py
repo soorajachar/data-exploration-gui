@@ -188,7 +188,7 @@ def demultiplexSingleCellData(experimentParameters):
                     indexList.append(fileNameColumn.iloc[row].split('_')[2])
                 fileIndex = indexList.index(newSampleID)
                 trueFileName = newFileName.split('_')[0]+'_'+fileNameColumn.iloc[fileIndex][:-4]+'_'+populationName+'.csv'
-                print(newFileName+'->'+trueFileName)
+                #print(newFileName+'->'+trueFileName)
                 fileNameDict['_'.join(trueFileName.split('_')[1:-1])] = '_'.join(fileName.split('_')[1:-1])
                 completeNewFileName = unpackedFolder+'/'+populationName+'/'+trueFileName
                 subprocess.run(['cp','inputData/singleCellCSVFiles/'+combinedPlateName+'/'+populationName+'/'+fileName,'inputData/singleCellCSVFiles/'+completeNewFileName])
