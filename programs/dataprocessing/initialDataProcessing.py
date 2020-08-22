@@ -151,14 +151,15 @@ def demultiplexSingleCellData(experimentParameters):
     #Create appropriate folders in each population
     for combinedPlateName in list(unpackingDict.keys()):
         for unpackedPlateName in unpackingDict[combinedPlateName]:
-            for populationName in returnSpecificExtensionFiles('inputData/singleCellCSVFiles/'+combinedPlateName,'',False):
-                if unpackedPlateName not in returnSpecificExtensionFiles('inputData/singleCellCSVFiles/','',False):
-                    subprocess.run(['mkdir','inputData/singleCellCSVFiles/'+unpackedPlateName])
-                    if populationName not in returnSpecificExtensionFiles('inputData/singleCellCSVFiles/'+unpackedPlateName,'',False):
-                        subprocess.run(['mkdir','inputData/singleCellCSVFiles/'+unpackedPlateName+'/'+populationName])
-                else:
-                    if populationName not in returnSpecificExtensionFiles('inputData/singleCellCSVFiles/'+unpackedPlateName,'',False):
-                        subprocess.run(['mkdir','inputData/singleCellCSVFiles/'+unpackedPlateName+'/'+populationName])
+            if unpackedPlateName != '':
+                for populationName in returnSpecificExtensionFiles('inputData/singleCellCSVFiles/'+combinedPlateName,'',False):
+                    if unpackedPlateName not in returnSpecificExtensionFiles('inputData/singleCellCSVFiles/','',False):
+                        subprocess.run(['mkdir','inputData/singleCellCSVFiles/'+unpackedPlateName])
+                        if populationName not in returnSpecificExtensionFiles('inputData/singleCellCSVFiles/'+unpackedPlateName,'',False):
+                            subprocess.run(['mkdir','inputData/singleCellCSVFiles/'+unpackedPlateName+'/'+populationName])
+                    else:
+                        if populationName not in returnSpecificExtensionFiles('inputData/singleCellCSVFiles/'+unpackedPlateName,'',False):
+                            subprocess.run(['mkdir','inputData/singleCellCSVFiles/'+unpackedPlateName+'/'+populationName])
     fileNameDict = {}
     for combinedPlateName in list(unpackingDict.keys()):
         for populationName in returnSpecificExtensionFiles('inputData/singleCellCSVFiles/'+combinedPlateName,'',False):
@@ -187,7 +188,7 @@ def demultiplexSingleCellData(experimentParameters):
                     indexList.append(fileNameColumn.iloc[row].split('_')[2])
                 fileIndex = indexList.index(newSampleID)
                 trueFileName = newFileName.split('_')[0]+'_'+fileNameColumn.iloc[fileIndex][:-4]+'_'+populationName+'.csv'
-                #print(newFileName+'->'+trueFileName)
+                print(newFileName+'->'+trueFileName)
                 fileNameDict['_'.join(trueFileName.split('_')[1:-1])] = '_'.join(fileName.split('_')[1:-1])
                 completeNewFileName = unpackedFolder+'/'+populationName+'/'+trueFileName
                 subprocess.run(['cp','inputData/singleCellCSVFiles/'+combinedPlateName+'/'+populationName+'/'+fileName,'inputData/singleCellCSVFiles/'+completeNewFileName])
@@ -278,6 +279,10 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
             if 'multiplexingOption' in experimentParameters:
                 if experimentParameters['multiplexingOption'] != 'None':
                     demultiplexSingleCellData(experimentParameters)
+            else:
+                if 'unpackingDict' in experimentParameters: 
+                    if len(experimentParameters['unpackingDict']) != 0:
+                        demultiplexSingleCellData(experimentParameters)
         else:
             realDataType = dataType
         
