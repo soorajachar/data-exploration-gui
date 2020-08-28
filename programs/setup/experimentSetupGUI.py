@@ -73,8 +73,20 @@ class ExperimentSetupStartPage(tk.Frame):
                 master.switch_frame(BlankSelectionPage,folderName,levels,levelValues,maxNumLevelValues,experimentParameters['numPlates'],plateDimensions,v3.get(),ExperimentSetupStartPage,bPage)
             #Tube mode
             else:
-                layout = pd.read_excel('misc/sampleNameFile.xlsx',header=0)
-                master.switch_frame(TubeLayoutPage,folderName,experimentParameters['levelLabelDict'],layout.shape[0],v3.get(),ExperimentSetupStartPage,bPage)
+                fcsFiles = []
+                if 'A1_cell.csv' not in os.listdir('inputData/bulkCSVFiles/'):
+                    for fcsName in os.listdir('inputData/fcsFiles'):
+                        if '.fcs' in fcsName:
+                            fcsFiles.append(fcsName)
+                    if len(fcsFiles) == 0:
+                        fcsFiles = ['                 ']
+                else:
+                    bulkStatFile = pd.read_csv('inputData/bulkCSVFiles/A1_cell.csv')
+                    for row in range(bulkStatFile.shape[0]):
+                        if bulkStatFile.iloc[row,0] not in ['Mean','SD']:
+                            fcsFiles.append(bulkStatFile.iloc[row,0])
+
+                master.switch_frame(TubeLayoutPage,folderName,experimentParameters['levelLabelDict'],len(fcsFiles),v3.get(),ExperimentSetupStartPage,bPage)
         
         def collectInput():
             global dataType

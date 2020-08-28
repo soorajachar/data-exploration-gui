@@ -34,7 +34,7 @@ class TubeLayoutPage(tk.Frame):
         labelWindow1.pack(side=tk.TOP,padx=10,fill=tk.X,expand=True)
         
         #Make canvas
-        w1 = tk.Canvas(labelWindow1, width=600, height=400,background="white", scrollregion=(0,0,3000,33*numSamples))
+        w1 = tk.Canvas(labelWindow1, width=1500, height=400,background="white", scrollregion=(0,0,3000,33*numSamples))
 
         #Make scrollbar
         scr_v1 = tk.Scrollbar(labelWindow1,orient=tk.VERTICAL)
@@ -85,12 +85,15 @@ class TubeLayoutPage(tk.Frame):
 
         fcsMenuList = []
         fcsVarList = []
+        includeCheckboxList = []
+        includeBoolVarList = []
         sampleDropdownList = []
         sampleParameterList = []
         
         tk.Label(mainWindow,text='FileName: ').grid(row=0,column=1)
+        tk.Label(mainWindow,text='Include?').grid(row=0,column=2)
         for i,level in enumerate(allLevelNames):
-            tk.Label(mainWindow,text=level+': ').grid(row=0,column=i+2)
+            tk.Label(mainWindow,text=level+': ').grid(row=0,column=i+3)
             
         for sample in range(numSamples):
             tk.Label(mainWindow,text='Sample '+str(sample+1)+': ').grid(row=sample+1,column=0)
@@ -99,8 +102,14 @@ class TubeLayoutPage(tk.Frame):
             fcsMenu = tk.OptionMenu(mainWindow,fcsVar,*fcsFiles)
             fcsMenu.grid(row=sample+1,column=1)
             setMaxWidth(fcsFiles,fcsMenu)
+            
             fcsMenuList.append(fcsMenu)
             fcsVarList.append(fcsVar)
+            includeBoolVar = tk.BooleanVar(value=True)
+            includeCheckbutton = tk.Checkbutton(mainWindow,variable=includeBoolVar)
+            includeCheckbutton.grid(row=sample+1,column=2)
+            includeCheckboxList.append(includeCheckbutton)
+            includeBoolVarList.append(includeBoolVar)
             
             currentSampleDropdownList = []
             currentSampleParameterList = []
@@ -118,7 +127,7 @@ class TubeLayoutPage(tk.Frame):
                     if not isinstance(sampleNameDf,list) and level in sampleNameDf.columns:
                        fcsVar.set(sampleNameDf.iloc[sample,0])
                        levelValueVar.set(sampleNameDf.iloc[sample,:][level])
-                levelValueMenu.grid(row=sample+1,column=i+2)
+                levelValueMenu.grid(row=sample+1,column=i+3)
                 setMaxWidth(levelValues,levelValueMenu)
                 currentSampleDropdownList.append(levelValueMenu)
                 currentSampleParameterList.append(levelValueVar)
@@ -131,14 +140,15 @@ class TubeLayoutPage(tk.Frame):
             fullSampleList = []
             indexTuples = []
             for i,sample in enumerate(fcsVarList):
-                fullSampleList.append(sample.get())
-                sampleTuple = []
-                for j,sampleParameter in enumerate(sampleParameterList[i]):
-                    if numericList[j]:
-                        sampleTuple.append(float(sampleParameter.get()))
-                    else:
-                        sampleTuple.append(sampleParameter.get())
-                indexTuples.append(sampleTuple)
+                if includeBoolVarList[i].get():
+                    fullSampleList.append(sample.get())
+                    sampleTuple = []
+                    for j,sampleParameter in enumerate(sampleParameterList[i]):
+                        if numericList[j]:
+                            sampleTuple.append(float(sampleParameter.get()))
+                        else:
+                            sampleTuple.append(sampleParameter.get())
+                    indexTuples.append(sampleTuple)
             mi = pd.MultiIndex.from_tuples(indexTuples,names=allLevelNames)
             data = fullSampleList 
             df1 = pd.Series(data,index=mi)

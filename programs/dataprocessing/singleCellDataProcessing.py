@@ -53,7 +53,7 @@ def grabCellTypeList(experimentParameters):
                     cellTypeList.append(cellType)
     else:
         cellTypeList = []
-        sampleNameDf = pd.read_excel('misc/sampleNameFile.xlsx')
+        sampleNameDf = pd.read_pickle('misc/tubeLayout-'+os.getcwd().split('/')[-1]+'-cell.pkl')
         fullSampleFileName = sampleNameDf.iloc[0,0]
         dotIndex = fullSampleFileName.rfind('.')
         sampleFileName = fullSampleFileName[:dotIndex]
