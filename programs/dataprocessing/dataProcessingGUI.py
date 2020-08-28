@@ -94,8 +94,6 @@ class DataProcessingStartPage(tk.Frame):
             else:
                 requiredFiles = ['initialSingleCellDf-channel-'+folderName+'.pkl']
             for requiredFile in requiredFiles:
-                print(os.getcwd())
-                print(os.listdir())
                 if requiredFile not in os.listdir('misc')+os.listdir('inputData/bulkCSVFiles')+os.listdir('outputData/pickleFiles'):
                     button.config(state=tk.DISABLED)
         
@@ -135,17 +133,9 @@ def dataProcessingMaster(folderName,expNum,dataType,ex_data):
         prolifdf = pdp.generateBulkProliferationStatistics(folderName,expNum)
         idp.saveFinalDataFrames(folderName,secondPath,expNum,dataType,prolifdf,ex_data) 
     elif(dataType == 'singlecell'):
-        fileList = os.listdir('inputData/singleCellCSVFiles')
         dataType = 'singlecell'
         if experimentFormat == 'plate':
-            fileNameDf = idp.createBaseDataFrame(experimentParameters,folderName,expNum,dataType,experimentLevelLayoutDict)
-            with open('misc/fileNameDf.pkl','wb') as f:
-                pickle.dump(fileNameDf,f)
-            scdf = scdp.createInitialSingleCellDataFrame(folderName,expNum,fileNameDf)
+            scdp.createPlateSingleCellDataFrame(folderName,experimentParameters,experimentLevelLayoutDict)
         else:
-            scdf = scdp.createTubeSingleCellDataFrame(folderName,experimentLevelLayoutDict)
-        print(scdf)
-        #if 'singleCellDataFrame-proliferation-'+folderName+'.pkl' in fileList:
-        #    #if experimentType not in ['AntibodyTest']:
-        #        scdp.createCompleteSingleCellDf(folderName)
+            scdf = scdp.createTubeSingleCellDataFrame(folderName,experimentParameters,experimentLevelLayoutDict)
     print(dataType+' dataframe created!')

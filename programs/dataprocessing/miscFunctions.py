@@ -69,22 +69,17 @@ def cleanUpFlowjoCSV(fileArray,folderName,dataType,experimentParameters):
         for plateColumn in plateColumnList:
             orderWellID[str(plateRow)+str(plateColumn)] = index
             index+=1
-    print(orderWellID)
     orderWellID['Mean'] = len(orderWellID.keys())+1
     orderWellID['SD'] = len(orderWellID.keys())+2
-    print(fileArray)
     for name in fileArray:
         temp = pd.read_csv('inputData/bulkCSVFiles/'+str(name)+'_'+dataTypeForCSV+'.csv')
         temp2 = [] 
-        print(temp)
         for i in range(0,temp.shape[0]):
             fullfilename = 'inputData/singleCellCSVFiles/'+name+'/'+temp.iloc[i,0][:temp.iloc[i,0].find('.')]
             if '_' in temp.iloc[i,0]:
                 wellID = temp.iloc[i,0].split('.')[0].split('_')[-3]
             else:
                 wellID = temp.iloc[i,0]
-            print(wellID)
-            print(orderWellID[wellID])
             temp.iloc[i,0] = orderWellID[wellID]
             #temp2.append([orderWellID[wellID],fullfilename])
             temp2.append([str(temp.iloc[i,0]).zfill(3),fullfilename])
@@ -335,3 +330,25 @@ def get_cluster_centroids(plottingDf,singleCluster=False):
         clusterCentroid = (sum(clusterX) / len(clusterX), sum(clusterY) / len(clusterX))
         clusterCentroids.append([str(numeric[0]),clusterCentroid])
     return clusterCentroids
+
+#https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+    # Print New Line on Complete
+    if iteration == total:
+        print()

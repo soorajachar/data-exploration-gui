@@ -73,7 +73,8 @@ class ExperimentSetupStartPage(tk.Frame):
                 master.switch_frame(BlankSelectionPage,folderName,levels,levelValues,maxNumLevelValues,experimentParameters['numPlates'],plateDimensions,v3.get(),ExperimentSetupStartPage,bPage)
             #Tube mode
             else:
-                master.switch_frame(TubeLayoutPage,folderName,experimentParameters['conditionLevelValues'],experimentParameters['columnLevelValues'],experimentParameters['numSamples'],experimentParameters['numericLevels'],experimentParameters['allLevelNames'],v3.get(),ExperimentSetupStartPage,bPage)
+                layout = pd.read_excel('misc/sampleNameFile.xlsx',header=0)
+                master.switch_frame(TubeLayoutPage,folderName,experimentParameters['levelLabelDict'],layout.shape[0],v3.get(),ExperimentSetupStartPage,bPage)
         
         def collectInput():
             global dataType
@@ -633,7 +634,7 @@ class conditionLevelValuesPage(tk.Frame):
                     json.dump(shortenedExperimentParameters, fp)
             #{"A1-12": {"A1-4": ["Barcode 1-", "Barcode 2-"], "A5-8": ["Barcode 1+", "Barcode 2-"], "A9-12": ["Barcode 1-", "Barcode 2+"]}}
             #{"A1-4": ["A1", "A2", "A4", "A3"], "A5-8": ["A5", "A6", "A8", "A7"], "A9-12": ["A9", "A10", "A12", "A11"]}
-            if dataType == 'both' or dataType == 'cell':
+            if (dataType == 'both' or dataType == 'cell') and experimentParameters['format'] == 'plate':
                 #Both
                 if '+' in globalMultiplexingVar:
                     for plate in experimentParameters['barcodingDict']:

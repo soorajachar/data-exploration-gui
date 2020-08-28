@@ -17,7 +17,12 @@ from miscFunctions import reindexDataFrame
 expParamDict = {'cyt':'cyt','cell':'cell','prolif':'cell','singlecell':'cell'}
 
 class TubeLayoutPage(tk.Frame):
-    def __init__(self,master,folderName,conditionLevelValues,columnLevelValues,numSamples,numericList,allLevelNames,dataType,secondaryhomepage,backPage):
+    def __init__(self,master,folderName,levelLabelDict,numSamples,dataType,secondaryhomepage,backPage):
+        allLevelNames = list(levelLabelDict.keys())
+        conditionLevelValues = [levelLabelDict[x] for x in list(levelLabelDict.keys())[:-1]]
+        columnLevelValues = levelLabelDict[list(levelLabelDict.keys())[-1]]
+        numericList = [False]*len(conditionLevelValues) + [True]
+
         tk.Frame.__init__(self, master)
         
         labelWindow = tk.Frame(self)
@@ -101,7 +106,7 @@ class TubeLayoutPage(tk.Frame):
             currentSampleParameterList = []
             for i,level in enumerate(allLevelNames):
                 if level != 'Time':
-                    levelValues = conditionLevelValues[level]
+                    levelValues = conditionLevelValues[i]
                 else:
                     levelValues = columnLevelValues
                 levelValueVar = tk.StringVar()

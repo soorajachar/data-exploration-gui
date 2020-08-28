@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 
-import math,pickle,os,sys,json,time,glob
+import math,pickle,os,sys,json,time,glob,string,subprocess
 from sys import platform as sys_pf
 if sys_pf == 'darwin':
     import matplotlib
@@ -10,7 +10,11 @@ import seaborn as sns
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from modifyDataFrames import returnModifiedDf
-from miscFunctions import reindexDataFrame
+from miscFunctions import reindexDataFrame,printProgressBar,extractValues,reorderDfByInputOrder,returnSpecificExtensionFiles
+idx = pd.IndexSlice
+
+plateRowLetters = list(string.ascii_uppercase)[:16]
+plateColumnNumbers = list(range(1,25))
 
 def produceSingleCellHeaders(cellTypes):
     newMultiIndexList = []
@@ -18,352 +22,270 @@ def produceSingleCellHeaders(cellTypes):
         newMultiIndexList.append([cellType])
     return newMultiIndexList
 
-def createTubeSingleCellDataFrame(folderName,fileNameDf):
-    fileNameDf = fileNameDf.stack()
-    dflist = []
-    #Multiple subfolders for each cell type
-    k = os.listdir('inputData/singleCellCSVFiles/')
-    dirList = [x[0].split('/')[2] for x in os.walk('inputData/singleCellCSVFiles/')]
-    if len(dirList)-1 > 0:
-        #Find markers common to all fcs files
-        allMarkers = []
-        for cellType in dirList[1:]:
-            scalingTypeList = os.listdir('inputData/singleCellCSVFiles/'+cellType+'/')
-            if '.csv' not in scalingTypeList[0]:
-                scalingType = scalingTypeList[1].split('_')[0]
-            else:
-                scalingType = scalingTypeList[0].split('_')[0]
-            for row in range(fileNameDf.shape[0]):
-                fileName = fileNameDf.iloc[row].split('.')[0]
-                possibleScale = fileName.split('_')
-                if possibleScale[0] == scalingType:
-                    tempScalingType = ''
-                else:
-                    tempScalingType = scalingType+'_'
-                csv = pd.read_csv('inputData/singleCellCSVFiles/'+cellType+'/'+tempScalingType+fileName+'_'+cellType+'.csv')
-                newcolumns = []
-                for i,column in enumerate(csv.columns):
-                    if 'FSC' in column:
-                        newcolumns.append('Size')
-                    elif 'SSC' in column:
-                        newcolumns.append('Granularity')
-                    else:
-                        if ' :: ' in column:
-                            newcolumns.append(column.split(' :: ')[1])
-                        else:
-                            newcolumns.append(column)
-                allMarkers.append(newcolumns)
-        commonMarkers = list(set.intersection(*map(set,allMarkers)))
-
-        for cellType in dirList[1:]:
-            scalingTypeList = os.listdir('inputData/singleCellCSVFiles/'+cellType+'/')
-            if '.csv' not in scalingTypeList[0]:
-                scalingType = scalingTypeList[1].split('_')[0]
-            else:
-                scalingType = scalingTypeList[0].split('_')[0]
-            for row in range(fileNameDf.shape[0]):
-                fileName = fileNameDf.iloc[row].split('.')[0]
-                possibleScale = fileName.split('_')
-                if possibleScale[0] == scalingType:
-                    tempScalingType = ''
-                else:
-                    tempScalingType = scalingType+'_'
-                csv = pd.read_csv('inputData/singleCellCSVFiles/'+cellType+'/'+tempScalingType+fileName+'_'+cellType+'.csv')
-                newcolumns = []
-                for i,column in enumerate(csv.columns):
-                    if 'FSC' in column:
-                        newcolumns.append('Size')
-                    elif 'SSC' in column:
-                        newcolumns.append('Granularity')
-                    else:
-                        if ' :: ' in column:
-                            newcolumns.append(column.split(' :: ')[1])
-                        else:
-                            newcolumns.append(column)
-                indexTuple = []
-                for row2 in range(csv.shape[0]):
-                    indexTuple.append([cellType]+list(fileNameDf.index.tolist()[row])+[row2+1])
-                mi = pd.MultiIndex.from_tuples(indexTuple,names=['CellType']+list(fileNameDf.index.names)+['Event'])
-                newdf = pd.DataFrame(csv.values,index=mi,columns=newcolumns)
-                #Subset by common markers
-                commonMarkerDf = newdf.loc[:,commonMarkers]
-                dflist.append(commonMarkerDf)
-    #Only one celltype/celltype doesn't matter
-    else:
-        #Find markers common to all fcs files
-        allMarkers = []
-        cellType = 'allCells'
-        scalingTypeList = os.listdir('inputData/singleCellCSVFiles/')
-        if '.csv' not in scalingTypeList[0]:
-            scalingType = scalingTypeList[1].split('_')[0]
+def grabCellTypeList(experimentParameters):
+    path = 'inputData/singleCellCSVFiles/'
+    if experimentParameters['format'] == 'plate':
+        nrows = experimentParameters['overallPlateDimensions'][0]
+        ncols = experimentParameters['overallPlateDimensions'][1]
+        if 'unpackingDict' in experimentParameters.keys():
+            orderingList = [str(x).zfill(3) for x in range(1,385)]
         else:
-            scalingType = scalingTypeList[0].split('_')[0]
-        for row in range(fileNameDf.shape[0]):
-            fileName = fileNameDf.iloc[row].split('.')[0]
-            possibleScale = fileName.split('_')
-            if possibleScale[0] == scalingType:
-                tempScalingType = ''
-            else:
-                tempScalingType = scalingType+'_'
-            csv = pd.read_csv('inputData/singleCellCSVFiles/'+tempScalingType+fileName+'.csv')
-            newcolumns = []
-            for i,column in enumerate(csv.columns):
-                if 'FSC' in column:
-                    newcolumns.append('Size')
-                elif 'SSC' in column:
-                    newcolumns.append('Granularity')
-                else:
-                    if ' :: ' in column:
-                        newcolumns.append(column.split(' :: ')[1])
-                    else:
-                        newcolumns.append(column)
-            allMarkers.append(newcolumns)
-        commonMarkers = list(set.intersection(*map(set,allMarkers)))
+            orderingList = [str(x).zfill(3) for x in range(1,nrows*ncols+1)]
 
-        for row in range(fileNameDf.shape[0]):
-            fileName = fileNameDf.iloc[row].split('.')[0]
-            possibleScale = fileName.split('_')
-            if possibleScale[0] == scalingType:
-                tempScalingType = ''
-            else:
-                tempScalingType = scalingType+'_'
-            csv = pd.read_csv('inputData/singleCellCSVFiles/'+tempScalingType+fileName+'.csv')
-            newcolumns = []
-            for i,column in enumerate(csv.columns):
-                if 'FSC' in column:
-                    newcolumns.append('Size')
-                elif 'SSC' in column:
-                    newcolumns.append('Granularity')
-                else:
-                    if ' :: ' in column:
-                        newcolumns.append(column.split(' :: ')[1])
-                    else:
-                        newcolumns.append(column)
-            indexTuple = []
-            for row2 in range(csv.shape[0]):
-                indexTuple.append([cellType]+list(fileNameDf.index.tolist()[row])+[row2+1])
-            mi = pd.MultiIndex.from_tuples(indexTuple,names=['CellType']+list(fileNameDf.index.names)+['Event'])
-            newdf = pd.DataFrame(csv.values,index=mi,columns=newcolumns)
-            commonMarkerDf = newdf.loc[:,commonMarkers]
-            dflist.append(commonMarkerDf)
+        #Plate case
+        #Walk through a plate, grab each unique cell type
+        cellTypeList = []
+        folder = ''
+        for fileName in os.listdir(path):
+            if '.DS' not in fileName:
+                folder = fileName
+        
+        for fileName in os.listdir(path+folder+'/'):
+            if '.DS' not in fileName:
+                splitFile = fileName.split('_')
+                parsingVal = ''
+                for split in splitFile:
+                    if split in orderingList:
+                        parsingVal = split
+                parsingPose = fileName.rindex(parsingVal)+4
+                cellType = fileName[parsingPose:].split('.')[0].replace('/','\/')
+                if cellType not in cellTypeList:
+                    cellTypeList.append(cellType)
+    else:
+        cellTypeList = []
+        sampleNameDf = pd.read_excel('misc/sampleNameFile.xlsx')
+        fullSampleFileName = sampleNameDf.iloc[0,0]
+        dotIndex = fullSampleFileName.rfind('.')
+        sampleFileName = fullSampleFileName[:dotIndex]
+        for fileName in os.listdir(path):
+            if '.DS' not in fileName and sampleFileName in fileName:
+                splitFile = fileName.split(sampleFileName[1:]+'_')
+                cellType = splitFile[1].split('.')[0]
+                if cellType not in cellTypeList:
+                    cellTypeList.append(cellType)
+
+    return cellTypeList
+
+def createTubeSingleCellDataFrame(folderName,experimentParameters,fileNameDf):
     
-    completeDataFrame = pd.concat(dflist,axis=0)
+    path = 'inputData/singleCellCSVFiles/'
+    
+    fileNameDf = fileNameDf.stack().to_frame('fileName')
+
+    #Grab common prefix for files
+    fullFileName = ''
+    for fileName in os.listdir(path):
+        if '.DS' not in fileName:
+            print(fileName)
+            fullFileName = fileName
+            break
+    prefix = fullFileName.split('_')[0]
+
+    #Remove extraneous decorations in marker names
+    newColumns = []
+    fcsDf = pd.read_csv(path+fullFileName,header=0)
+    for column in fcsDf.columns:
+        if '::' in column:
+            column = column.split(' :: ')[1]
+        #CyTOF
+        if column[0].isdigit():
+            column = column.split('_')[1]
+        newColumns.append(column)
+
+    cellTypeList = grabCellTypeList(experimentParameters)
+    
+    completeDfList = []
+    for cellType in cellTypeList:
+        for row in range(fileNameDf.shape[0]):
+            fullFileName = fileNameDf.iloc[row,0]
+            dotIndex = fullFileName.rfind('.')
+            fileName = fullFileName[:dotIndex]
+            trueFileName = prefix+'_'+fileName+'_'+cellType+'.csv'
+            levelValues = list(fileNameDf.iloc[row,:].name) 
+            fcsDf = pd.read_csv(path+trueFileName,header=0)
+            eventNumber = fcsDf.shape[0]
+            eventList = range(1,eventNumber+1)
+            allLevelValues = []
+            for event in eventList:
+                allLevelValues.append([cellType]+levelValues+[event])
+            newMultiIndex = pd.MultiIndex.from_tuples(allLevelValues,names=['CellType']+list(fileNameDf.index.names)+['Event'])
+            newDf = pd.DataFrame(fcsDf.values,index=newMultiIndex,columns=newColumns)
+            completeDfList.append(newDf)
+            printProgressBar(row + 1, fileNameDf.shape[0], prefix = ' Concatenating samples:', suffix = 'Complete', length = 50)
+
+    completeDataFrame = pd.concat(completeDfList)
     completeDataFrame.columns.name = 'Marker'
+
+    #Remove extraneous markers (namely -h parameters)
+    columnsToKeep = []
+    for col,column in enumerate(completeDataFrame.columns):
+        if '-H' not in column and 'Time' not in column and '-W' not in column:
+            columnsToKeep.append(col)
+    completeDataFrame = completeDataFrame.iloc[:,columnsToKeep]
+
+    completeDataFrame.to_hdf('outputData/pickleFiles/initialSingleCellDf-channel-'+folderName+'.h5', key='df', mode='w')
     print(completeDataFrame)
-    completeDataFrame.to_hdf('outputData/pickleFiles/initialSingleCellDf-'+scalingType+'-'+folderName+'.h5', key='df', mode='w')
-    #with open('outputData/pickleFiles/initialSingleCellDf-'+scalingType+'-'+folderName+'.pkl','wb') as f:
-    #    pickle.dump(completeDataFrame,f)
 
-def createInitialSingleCellDataFrame(folderName,experimentNumber,fileNameDataFrame):
+#If multiplexing option chosen
+def demultiplexSingleCellData(experimentParameters):
+    #"multiplexingOption": "96->384 well", "unpackingDict": {"A1-2_B1-2": ["A1", "A2", "B2", "B1"]
+    unpackingDict = experimentParameters['unpackingDict']
+    unpackingPositionDict = {(0,0):0,(0,1):1,(1,0):2,(1,1):3}
+    cellTypeList = grabCellTypeList(experimentParameters)
+
+    #Currently in format A1; A2, B1; B2
+    #Need to change to format A1: B1, A2, B2
+    plateRowLetters = string.ascii_uppercase[:16]
+    plateColumnNumbers = list(range(1,25))
+
+    wellPlateRowLetters = string.ascii_uppercase[:8]
+    wellPlateColumnNumbers = list(range(1,13))
+
+    #Create appropriate folders in each population
+    for combinedPlateName in list(unpackingDict.keys()):
+        for unpackedPlateName in unpackingDict[combinedPlateName]:
+            if unpackedPlateName != '':
+                if unpackedPlateName not in returnSpecificExtensionFiles('inputData/singleCellCSVFiles/','',False):
+                    subprocess.run(['mkdir','inputData/singleCellCSVFiles/'+unpackedPlateName])
+    fileNameDict = {}
+    combinedPlateNames = list(unpackingDict.keys())
+    for combinedPlateName in combinedPlateNames:
+        for populationName in cellTypeList:
+            #scale_Specimen_001_P9_P09_369_TCells.csv
+            allFileNames = returnSpecificExtensionFiles('inputData/singleCellCSVFiles/'+combinedPlateName,'',False)
+            unpackedPlateNames = unpackingDict[combinedPlateName]
+            for k,fileName in enumerate(allFileNames):
+                sampleID = fileName.split('_')[3]
+                currentRowLetter = sampleID[0]
+                currentColumnNumber = int(sampleID[1:])
+                #Get index of current row and column position
+                currentRowLetterIndex = plateRowLetters.index(currentRowLetter)
+                currentColumnNumberIndex = plateColumnNumbers.index(currentColumnNumber)
+                #Demultiplex sample ids 
+                wellPlateRowLetter = wellPlateRowLetters[int(currentRowLetterIndex/2)]
+                wellPlateColumnNumber = wellPlateColumnNumbers[int(currentColumnNumberIndex/2)]
+                newSampleID = str(wellPlateRowLetter)+str(wellPlateColumnNumber)
+                newSampleID2 = str(wellPlateRowLetter)+str(wellPlateColumnNumber).zfill(2)
+                newFileName = '_'.join(['_'.join(fileName.split('_')[:3]),newSampleID,newSampleID2,'_'.join(fileName.split('_')[-2:])])
+                unpackedPlateIndex = unpackingPositionDict[(currentRowLetterIndex%2,currentColumnNumberIndex%2)]
+                unpackedFolder = unpackedPlateNames[unpackedPlateIndex]
+                trueFileName = newFileName
+                #print(fileName+'->'+newFileName)
+                fileNameDict['_'.join(trueFileName.split('_')[1:-1])] = '_'.join(fileName.split('_')[1:-1])
+                completeNewFileName = unpackedFolder+'/'+trueFileName
+                subprocess.run(['cp','inputData/singleCellCSVFiles/'+combinedPlateName+'/'+fileName,'inputData/singleCellCSVFiles/'+completeNewFileName])
+                printProgressBar(k + 1, len(allFileNames), prefix = ' Demultiplexing '+combinedPlateName+','+populationName+':', suffix = 'Complete', length = 50)
+    with open('misc/fileNameDict.pkl','wb') as f:
+        pickle.dump(fileNameDict,f)
+
+def createPlateSingleCellDataFrame(folderName,experimentParameters,levelLayout):
     
-    #Grabs a file from samples to read marker names off of
-    for fileName in os.listdir('inputData/singleCellCSVFiles/A1/'):
-        if 'DS' not in fileName:
-            cellType = fileName
-    tempFilePath = 'inputData/singleCellCSVFiles/A1/'+cellType+'/' 
-    fileExtension = '.csv'
-    tempFileName = glob.glob(tempFilePath+'*'+fileExtension)[0]
-    experimentalChannelDf = pd.read_csv(tempFileName, header=0)
-    experimentalChannelNames = experimentalChannelDf.columns.tolist()
-    experimentalMarkerNames = []
-    if 'gateVals' in os.listdir('misc'):
-        gatingMarkers = pickle.load(open('inputFiles/gateVals.pkl','rb'))
-    else: 
-        gatingMarkers = {}
-    if 'TCell_Gate' not in gatingMarkers.keys():
-        gatingMarkers['TCell_Gate'] = 'none'
-    if 'APC_Gate' not in gatingMarkers.keys():
-        gatingMarkers['APC_Gate'] = 'none'
-    #Creates column headings for all measured parameters
-    for i in range(len(experimentalChannelNames)):
-        #"Comp-APC-A :: CTFR"
-        if('::' in experimentalChannelNames[i]):
-            experimentalMarkerName = experimentalChannelNames[i].split(' :: ')[1]
-        else:
-            experimentalMarkerName = experimentalChannelNames[i]
-        if len(gatingMarkers) > 0:
-            if gatingMarkers['TCell_Gate'] == experimentalMarkerName:
-                experimentalMarkerNames.append('TCell_Gate')
-            elif gatingMarkers['APC_Gate'] == experimentalMarkerName:
-                experimentalMarkerNames.append('APC_Gate')
-            else:
-                if 'FSC-A' in experimentalChannelNames[i]:
-                    experimentalMarkerNames.append('Size')
-                elif 'SSC-A' in experimentalChannelNames[i]:
-                    experimentalMarkerNames.append('Granularity')
-                else:
-                    experimentalMarkerNames.append(experimentalMarkerName)
-        else:
-            if 'FSC-A' in experimentalChannelNames[i]:
-                experimentalMarkerNames.append('Size')
-            elif 'SSC-A' in experimentalChannelNames[i]:
-                experimentalMarkerNames.append('Granularity')
-            else:
-                experimentalMarkerNames.append(experimentalMarkerName)
-    stackedFileFrame = fileNameDataFrame.stack()
-    levelNames = list(stackedFileFrame.index.names)
-    singleCellLevelNames = levelNames+['Event']
-    channelBool = False
-    scaleBool = False
-    scalingLevels = [] 
-    for fileName in glob.glob(tempFilePath+'*'+fileExtension):
-        if 'channel' in fileName:
-            channelBool = True
-        if 'scale' in fileName:
-            scaleBool = True
-    if not channelBool and not scaleBool:
-        print('No csv files with channel or scale value suffixes found. Please try again.')
+    path = 'inputData/singleCellCSVFiles/'
+    if 'unpackingDict' in experimentParameters:
+        demultiplexSingleCellData(experimentParameters)
+    
+    nrows = experimentParameters['overallPlateDimensions'][0]
+    ncols = experimentParameters['overallPlateDimensions'][1]
+
+    if 'unpackingDict' in experimentParameters.keys():
+        orderingList = [str(x).zfill(3) for x in range(1,385)]
     else:
-        if channelBool:
-            scalingLevels.append('channel')
-        if scaleBool:
-            scalingLevels.append('scale')
-        for scalingType in scalingLevels:
-            fullFileFrameTemp = stackedFileFrame.copy().to_frame('Temp')
-            completeDataFrameList = []
-            for row in range(stackedFileFrame.shape[0]):
-                levelValues = fullFileFrameTemp.iloc[row].name
-                cellType = levelValues[0]
-                fileIndex = stackedFileFrame.iloc[row].rfind('/')
-                beforeCellType = stackedFileFrame.iloc[row][:fileIndex]
-                afterCellType = scalingType+'_'+stackedFileFrame.iloc[row][fileIndex+1:]+'_'+cellType+fileExtension
-                fullFileName = beforeCellType+'/'+cellType+'/'+afterCellType
-                
-                fcsDf = pd.read_csv(fullFileName,header=0)
-                eventNumber = fcsDf.shape[0]
-                eventList = range(1,eventNumber+1)
-                allLevelValues = []
-                for event in eventList:
-                    allLevelValues.append(list(levelValues)+[event])
-                newMultiIndex = pd.MultiIndex.from_tuples(allLevelValues,names=singleCellLevelNames)
-                """
-                temp = []
-                if 'CD45R' in fcsDf.columns or (cols[2] == 'CD25' and cols[3] == 'CD4'):
-                    tempDf1 = fcsDf.copy().iloc[:,2]
-                    tempDf2 = fcsDf.copy().iloc[:,3]
-                    fcsDf.iloc[:,2] = tempDf2
-                    fcsDf.iloc[:,3] = tempDf1
-                cols = list(fcsDf.columns)
-                for i,col in enumerate(fcsDf.columns):
-                    if 'CD45R' not in col:
-                        temp.append(i)
-                fcsDf = fcsDf.iloc[:,temp]
-                """
-                newDf = pd.DataFrame(fcsDf.values,index=newMultiIndex,columns=experimentalMarkerNames)
-                #newDf = pd.DataFrame(fcsDf.values,index=newMultiIndex,columns=fcsDf.columns)
-                completeDataFrameList.append(newDf)
-            
-            completeDataFrame = pd.concat(completeDataFrameList)
-            completeDataFrame.columns.name = 'Marker'
-            
-            #Remove extraneous markers (namely -h parameters)
-            columnsToKeep = []
-            for col,column in enumerate(completeDataFrame.columns):
-                if '-H' not in column and 'Time' not in column:
-                    columnsToKeep.append(col)
-            completeDataFrame = completeDataFrame.iloc[:,columnsToKeep]
+        orderingList = [str(x).zfill(3) for x in range(1,nrows*ncols+1)]
 
-            completeDataFrame.to_hdf('outputData/pickleFiles/initialSingleCellDf-'+scalingType+'-'+folderName+'.h5', key='df', mode='w')
-            #with open('outputData/pickleFiles/initialSingleCellDf-'+scalingType+'-'+folderName+'.pkl','wb') as f:
-            #    pickle.dump(completeDataFrame,f)
-            #Legacy proliferation code
-            if 'TCell_Gate' in completeDataFrame.columns:
-                tcellGateName = 'TCell_Gate'
+    completeKeyMatrix = np.dstack(list(levelLayout['keys'].values()))
+    unraveledKeyMatrix = np.reshape(completeKeyMatrix,(completeKeyMatrix.shape[0]*completeKeyMatrix.shape[1],completeKeyMatrix.shape[2]))
+    unraveledBlankMatrix = levelLayout['blank'].ravel()
+
+    sampleIndex = pd.MultiIndex.from_arrays([levelLayout['plateID'].ravel(),levelLayout['wellID'].ravel()],names=['Plate','Well'])
+    sampleKeyDf = pd.DataFrame(unraveledKeyMatrix,index=sampleIndex,columns=list(experimentParameters['levelLabelDict'].keys()))
+    sampleDf = sampleKeyDf.copy()
+    for row in range(sampleDf.shape[0]):
+        for col in range(sampleDf.shape[1]):
+            level = list(experimentParameters['levelLabelDict'].keys())[col]
+            levelValueIndex = sampleKeyDf.iloc[row,col]
+            levelValue = experimentParameters['levelLabelDict'][level][levelValueIndex]
+            if unraveledBlankMatrix[row] == -1:
+                sampleDf.iloc[row,col] = levelValue
             else:
-                if 'CTV' in completeDataFrame.columns:
-                    for column in completeDataFrame.columns:
-                        if 'CTV' in column:
-                            tcellGateName = column
-                            break
-                else:
-                    tcellGateName = 'None'
-            
-            if scalingType == 'channel':
-                if 'TCells' in pd.unique(completeDataFrame.index.get_level_values('CellType')) and tcellGateName != 'None':
-                    logicleDataProliferation = completeDataFrame[tcellGateName].xs(['TCells'],level=['CellType'])
-                    with open('misc/logicleProliferationDf.pkl','wb') as f:
-                        pickle.dump(logicleDataProliferation,f)
-            else:
-                if 'TCells' in pd.unique(completeDataFrame.index.get_level_values('CellType')) and tcellGateName != 'None':
-                    rawDataProliferation = completeDataFrame[tcellGateName].xs(['TCells'],level=['CellType'])
-                    with open('misc/rawProliferationDf.pkl','wb') as f:
-                        pickle.dump(rawDataProliferation,f)
+                sampleDf.iloc[row,col] = 'Blank' 
 
-def createCompleteSingleCellDf(folderName):
-   
-    idx = pd.IndexSlice
+    #Drop blanks
+    sampleDf = sampleDf.query("Time != 'Blank'")
+    sampleDf.to_excel('outputData/excelFiles/fcsLabelingKey.xlsx')
     
-    initialSingleCellDf = pickle.load(open('outputData/pickleFiles/initialSingleCellDf-channel-'+folderName+'.pkl','rb'))
-    initialSingleCellDf = initialSingleCellDf.drop(['APC_Gate','TCell_Gate'],axis=1)
-    bulkCytokineConcentrationDf = pickle.load(open('semiProcessedData/cytokineConcentrationPickleFile-'+folderName+'-modified.pkl','rb'))
-    proliferationDf = pickle.load(open('semiProcessedData/singleCellDataFrame-proliferation-'+folderName+'.pkl','rb'))
+    cellTypeList = grabCellTypeList(experimentParameters)
 
-    bulkCellStatisticDf = pickle.load(open('semiProcessedData/cellStatisticPickleFile-'+folderName+'-modified.pkl','rb'))
+    newSampleDfList = []
+    for cellType in cellTypeList:
+        #Create dict that relates sample file locations to plate/wellIDs
+        orderValDict = {}
+        for plateName in list(np.unique(levelLayout['plateID'])):
+            orderValDict2 = {}
+            if 'DS' not in plateName:
+                for fileName in os.listdir(path+plateName+'/'):
+                    if 'DS' not in fileName:
+                        splitFile = fileName.split('_')
+                        parsingVal = ''
+                        for split in splitFile:
+                            if split in orderingList:
+                                parsingVal = split
+                        parsingPose = fileName.rindex(parsingVal)
+                        currentCellType = fileName[parsingPose+4:].split('.')[0]
+                        if currentCellType == cellType:
+                            orderVal = fileName[parsingPose:parsingPose+3]
+                            wellID = fileName[:parsingPose-1].split('_')[-2]
+                            orderValDict2[wellID] = path+plateName+'/'+fileName
+            orderValDict[plateName] = orderValDict2
+        sampleTupleList,sampleList = [],[]
+        for row in range(sampleDf.shape[0]):
+            sampleID = list(sampleDf.iloc[row,:].name)
+            plateID = sampleID[0]
+            wellID = sampleID[1]
+            sampleFileName = orderValDict[plateID][wellID]
+            sampleList.append(sampleFileName)
+            sampleTuple = [cellType]+sampleDf.loc[idx[plateID,wellID],:].values.tolist()
+            sampleTupleList.append(sampleTuple)
+        sampleMI = pd.MultiIndex.from_tuples(sampleTupleList,names=['CellType']+list(sampleDf.columns))
+        newSampleDf = pd.DataFrame(sampleList,index=sampleMI,columns=['fileName'])
+        newSampleDfList.append(newSampleDf)
 
-    cytokineLevelNamesUM = []
-    cytokineLevelNames = []
-    cellLevelNames = []
+    fileNameDf = pd.concat(newSampleDfList)
 
-    tempCellLevels = list(bulkCellStatisticDf.iloc[0,:].name)[:3]
-    tempCellDf = bulkCellStatisticDf.loc[tempCellLevels[0]].loc[tempCellLevels[1]].loc[tempCellLevels[2]]
-
-    tempCytokineLevels = list(bulkCytokineConcentrationDf.iloc[0,:].name)[:1]
-    tempCytokineDf = bulkCytokineConcentrationDf.loc[tempCytokineLevels[0]]
+    bothBool = False
+    fullFileName = fileNameDf.iloc[0,0]
+    fcsDf = pd.read_csv(fullFileName,header=0)
+    for column in fcsDf.columns:
+        if '::' in column:
+            bothBool = True
     
-    unmodifiedCytokineConcentrationDf = pickle.load(open('semiProcessedData/cytokineConcentrationPickleFile-'+folderName+'.pkl','rb')).loc[tempCytokineLevels[0]]
-    
-    for row in range(tempCellDf.shape[0]):
-        levelNames = list(tempCellDf.iloc[row,:].name)
-        for column in tempCellDf.columns:
-            cellLevelNames.append(tuple(levelNames+[column]))
-    for row in range(tempCytokineDf.shape[0]):
-        levelNames = list(tempCytokineDf.iloc[row,:].name)
-        for column in tempCytokineDf.columns:
-            cytokineLevelNames.append(tuple(levelNames+[column]))
-    for row in range(unmodifiedCytokineConcentrationDf.shape[0]):
-        levelNames = list(unmodifiedCytokineConcentrationDf.iloc[row,:].name)
-        for column in unmodifiedCytokineConcentrationDf.columns:
-            cytokineLevelNamesUM.append(tuple(levelNames+[column]))
-    
-    differences = list((set(tuple(cytokineLevelNamesUM)) | set(tuple(cytokineLevelNames)) | set(tuple(cellLevelNames))) - (set(tuple(cytokineLevelNamesUM)) & set(tuple(cytokineLevelNames)) & set(tuple(cellLevelNames))))
-    levelsToKeep = [0]*initialSingleCellDf.shape[0]
-    k=0
-    row = 0
-    while row < initialSingleCellDf.shape[0]:
-        levelNames = tuple(initialSingleCellDf.iloc[row,:].name)[:-1]
-        stackedLevelNames = tuple(list(levelNames)+[slice(None)])
-        stackedLength = initialSingleCellDf.loc[stackedLevelNames,:].shape[0]
-        #Check logic here later; should do for now
-        if (tuple(levelNames) in differences):
-            print(levelNames)
-            pass
+    completeDfList = []
+    for row in range(fileNameDf.shape[0]):
+        fullFileName = fileNameDf.iloc[row,0]
+        levelValues = list(fileNameDf.iloc[row,:].name) 
+        fcsDf = pd.read_csv(fullFileName,header=0)
+        eventNumber = fcsDf.shape[0]
+        eventList = range(1,eventNumber+1)
+        allLevelValues = []
+        for event in eventList:
+            allLevelValues.append(levelValues+[event])
+        newMultiIndex = pd.MultiIndex.from_tuples(allLevelValues,names=list(fileNameDf.index.names)+['Event'])
+        if bothBool:
+            newColumns = [x.split(' :: ')[1] if '::' in x else x for x in fcsDf.columns]
         else:
-            rowVals = range(row,row+stackedLength)
-            levelsToKeep[k:k+stackedLength] = rowVals
-            k+=stackedLength
-        row+=stackedLength
-    initialSingleCellDf = initialSingleCellDf.iloc[levelsToKeep[:k],:]
-    proliferationDf = proliferationDf.iloc[levelsToKeep[:k],:]
-    indexList = []
-    numEventsList = []
-    for elem in pd.unique(initialSingleCellDf.index):
-        indexList.append(elem[:-1])
-    indexList = pd.unique(indexList)
-    for index in indexList:
-        numEventsList.append(initialSingleCellDf.loc[idx[index],:].shape[0])
-    completeSingleCellCytokineValues = []
-    for cytokine in pd.unique(bulkCytokineConcentrationDf.index.get_level_values(0)):
-        individualCytokineSingleCellValues = []
-        for index,numEvents in zip(indexList,numEventsList):
-            bulkIndex = tuple([cytokine]+list(index[:-1]))
-            bulkCytokineValue = bulkCytokineConcentrationDf.loc[idx[bulkIndex],index[-1]]
-            singleCellCytokineValues = np.repeat(bulkCytokineValue,numEvents)
-            individualCytokineSingleCellValues.append(singleCellCytokineValues)
-        completeSingleCellCytokineValues.append(np.concatenate(individualCytokineSingleCellValues))
-    singleCellCytokineMatrix = np.stack(completeSingleCellCytokineValues,axis=1)
-    singleCellCytokineDf = pd.DataFrame(singleCellCytokineMatrix,index=initialSingleCellDf.index,columns=pd.unique(bulkCytokineConcentrationDf.index.get_level_values(0)))
-     
-    completeSingleCellDf = pd.concat([initialSingleCellDf,singleCellCytokineDf,proliferationDf],keys=['Markers','Cytokines','Proliferation'],names=['DataType','Parameter'],axis=1)
-    print(completeSingleCellDf)
-    with open('outputData/pickleFiles/singleCellDataFrame-complete-'+folderName+'.pkl','wb') as f:
-        pickle.dump(completeSingleCellDf,f)
+            newColumns = fcsDf.columns
+        newDf = pd.DataFrame(fcsDf.values,index=newMultiIndex,columns=newColumns)
+        completeDfList.append(newDf)
+        printProgressBar(row + 1, fileNameDf.shape[0], prefix = ' Concatenating samples:', suffix = 'Complete', length = 50)
+
+    completeDataFrame = pd.concat(completeDfList)
+    completeDataFrame.columns.name = 'Marker'
+
+    #Remove extraneous markers (namely -h parameters)
+    columnsToKeep = []
+    for col,column in enumerate(completeDataFrame.columns):
+        if '-H' not in column and 'Time' not in column and '-W' not in column:
+            columnsToKeep.append(col)
+    completeDataFrame = completeDataFrame.iloc[:,columnsToKeep]
+
+    completeDataFrame.to_hdf('outputData/pickleFiles/initialSingleCellDf-channel-'+folderName+'.h5', key='df', mode='w')
+    print(completeDataFrame)

@@ -29,13 +29,6 @@ def returnMultiIndex(sortedData,sortedFiles,dataType,folderName):
             newMultiIndex = cellDataProcessing.parseCellCSVHeaders(pd.read_csv('inputData/bulkCSVFiles/A1_'+dataType+'.csv').columns,panelData=panelData)
         else:
             newMultiIndex = cellDataProcessing.parseCellCSVHeaders(pd.read_csv('inputData/bulkCSVFiles/A1_'+dataType+'.csv').columns)
-    elif(dataType == 'singlecell'):
-        #Grabs a file from samples to read marker names off of
-        cellTypeList = []
-        for fileName in os.listdir('inputData/singleCellCSVFiles/A1/'):
-            if 'DS' not in fileName:
-                cellTypeList.append(fileName)
-        newMultiIndex = singleCellDataProcessing.produceSingleCellHeaders(cellTypeList)
     elif(dataType == 'cytcorr'):
         newMultiIndex = []
     if dataType != 'singlecell':
@@ -134,67 +127,6 @@ def unpackMultiplexedPlates(experimentParameters,folderName,dataType):
                     for item in newCSVLines:
                         f.write("%s" % item)
 
-#If multiplexing option chosen
-def demultiplexSingleCellData(experimentParameters):
-    #"multiplexingOption": "96->384 well", "unpackingDict": {"A1-2_B1-2": ["A1", "A2", "B2", "B1"]
-    unpackingDict = experimentParameters['unpackingDict']
-    unpackingPositionDict = {(0,0):0,(0,1):1,(1,0):2,(1,1):3}
-
-    #Currently in format A1; A2, B1; B2
-    #Need to change to format A1: B1, A2, B2
-    plateRowLetters = string.ascii_uppercase[:16]
-    plateColumnNumbers = list(range(1,25))
-
-    wellPlateRowLetters = string.ascii_uppercase[:8]
-    wellPlateColumnNumbers = list(range(1,13))
-
-    #Create appropriate folders in each population
-    for combinedPlateName in list(unpackingDict.keys()):
-        for unpackedPlateName in unpackingDict[combinedPlateName]:
-            if unpackedPlateName != '':
-                for populationName in returnSpecificExtensionFiles('inputData/singleCellCSVFiles/'+combinedPlateName,'',False):
-                    if unpackedPlateName not in returnSpecificExtensionFiles('inputData/singleCellCSVFiles/','',False):
-                        subprocess.run(['mkdir','inputData/singleCellCSVFiles/'+unpackedPlateName])
-                        if populationName not in returnSpecificExtensionFiles('inputData/singleCellCSVFiles/'+unpackedPlateName,'',False):
-                            subprocess.run(['mkdir','inputData/singleCellCSVFiles/'+unpackedPlateName+'/'+populationName])
-                    else:
-                        if populationName not in returnSpecificExtensionFiles('inputData/singleCellCSVFiles/'+unpackedPlateName,'',False):
-                            subprocess.run(['mkdir','inputData/singleCellCSVFiles/'+unpackedPlateName+'/'+populationName])
-    fileNameDict = {}
-    for combinedPlateName in list(unpackingDict.keys()):
-        for populationName in returnSpecificExtensionFiles('inputData/singleCellCSVFiles/'+combinedPlateName,'',False):
-            #scale_Specimen_001_P9_P09_369_TCells.csv
-            allFileNames = returnSpecificExtensionFiles('inputData/singleCellCSVFIles/'+combinedPlateName+'/'+populationName,'',False)
-            unpackedPlateNames = unpackingDict[combinedPlateName]
-            for fileName in allFileNames:
-                sampleID = fileName.split('_')[3]
-                currentRowLetter = sampleID[0]
-                currentColumnNumber = int(sampleID[1:])
-                #Get index of current row and column position
-                currentRowLetterIndex = plateRowLetters.index(currentRowLetter)
-                currentColumnNumberIndex = plateColumnNumbers.index(currentColumnNumber)
-                #Demultiplex sample ids 
-                wellPlateRowLetter = wellPlateRowLetters[int(currentRowLetterIndex/2)]
-                wellPlateColumnNumber = wellPlateColumnNumbers[int(currentColumnNumberIndex/2)]
-                newSampleID = str(wellPlateRowLetter)+str(wellPlateColumnNumber)
-                newFileName = '_'.join(['_'.join(fileName.split('_')[:3]),newSampleID,'_'.join(fileName.split('_')[-3:])])
-                unpackedPlateIndex = unpackingPositionDict[(currentRowLetterIndex%2,currentColumnNumberIndex%2)]
-                unpackedFolder = unpackedPlateNames[unpackedPlateIndex]
-                
-                realFileNameCSV = pd.read_csv('inputData/bulkCSVFiles/'+unpackedFolder+'_cell.csv',header=0)
-                fileNameColumn = realFileNameCSV.iloc[:-2,0]
-                indexList = []
-                for row in range(fileNameColumn.shape[0]):
-                    indexList.append(fileNameColumn.iloc[row].split('_')[2])
-                fileIndex = indexList.index(newSampleID)
-                trueFileName = newFileName.split('_')[0]+'_'+fileNameColumn.iloc[fileIndex][:-4]+'_'+populationName+'.csv'
-                #print(newFileName+'->'+trueFileName)
-                fileNameDict['_'.join(trueFileName.split('_')[1:-1])] = '_'.join(fileName.split('_')[1:-1])
-                completeNewFileName = unpackedFolder+'/'+populationName+'/'+trueFileName
-                subprocess.run(['cp','inputData/singleCellCSVFiles/'+combinedPlateName+'/'+populationName+'/'+fileName,'inputData/singleCellCSVFiles/'+completeNewFileName])
-    with open('misc/fileNameDict.pkl','wb') as f:
-        pickle.dump(fileNameDict,f)
-
 def performCommaCheck(fileName):
     with open('inputData/bulkCSVFiles/'+fileName, 'r') as istr:
         with open('inputData/bulkCSVFiles/'+fileName, 'w') as ostr:
@@ -273,23 +205,12 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
 
         fullExperimentDf = pd.concat(dfList)
     else:
-        if dataType == 'singlecell':
-            realDataType = 'singlecell'
-            dataType = 'cell'
-            if 'multiplexingOption' in experimentParameters:
-                if experimentParameters['multiplexingOption'] != 'None':
-                    demultiplexSingleCellData(experimentParameters)
-            else:
-                if 'unpackingDict' in experimentParameters: 
-                    if len(experimentParameters['unpackingDict']) != 0:
-                        demultiplexSingleCellData(experimentParameters)
-        else:
-            realDataType = dataType
-        
-            if 'barcodingDict' in list(experimentParameters.keys()):
-                decodeBarcodedPlates(experimentParameters,folderName,dataType)
-            if 'unpackingDict' in list(experimentParameters.keys()):
-                unpackMultiplexedPlates(experimentParameters,folderName,dataType)
+        realDataType = dataType
+    
+        if 'barcodingDict' in list(experimentParameters.keys()):
+            decodeBarcodedPlates(experimentParameters,folderName,dataType)
+        if 'unpackingDict' in list(experimentParameters.keys()):
+            unpackMultiplexedPlates(experimentParameters,folderName,dataType)
 
         #Legacy experiment parameter files compatibility
         if 'paired' in experimentParameters.keys():
@@ -320,9 +241,10 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
         conditionLevelValues = levelLabelDict.copy()
         del conditionLevelValues[list(levelLabelDict.keys())[-1]]
         allLevelValues = experimentParameters['levelLabelDict']
-
+            
         sortedData,sortedFiles = cleanUpFlowjoCSV(plateNames,folderName,dataType,experimentParameters)
         allRawData,newLevelList = returnMultiIndex(sortedData,sortedFiles,realDataType,folderName)
+            
         dfList = []
         for rawData,plateID in zip(allRawData,plateNames):
             fullTupleList = []
@@ -349,17 +271,10 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
             mi = pd.MultiIndex.from_tuples(fullTupleList,names=levels)
             columnSeriesList = []
             columnTupleList = []
-            #single cell dataframe only has 2 columns
-            if realDataType == 'singlecell':
-                for columnTuple in newLevelList:
-                    columnSeries = pd.Series(rawData.values[:,1],index=mi)
-                    columnSeriesList.append(columnSeries)
-                    columnTupleList.append(tuple(columnTuple))
-            else:
-                for column,columnTuple in enumerate(newLevelList):
-                    columnSeries = pd.Series(rawData.values[:,column+1],index=mi)
-                    columnSeriesList.append(columnSeries)
-                    columnTupleList.append(tuple(columnTuple))
+            for column,columnTuple in enumerate(newLevelList):
+                columnSeries = pd.Series(rawData.values[:,column+1],index=mi)
+                columnSeriesList.append(columnSeries)
+                columnTupleList.append(tuple(columnTuple))
             platedf = pd.concat(columnSeriesList,axis=0,keys=columnTupleList,names=dataTypeLevelNames[realDataType])
             dfList.append(platedf)
 
