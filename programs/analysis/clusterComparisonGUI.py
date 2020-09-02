@@ -140,6 +140,12 @@ class ClusterComparisonHomePage(tk.Frame):
                 elif clusterSelectionFileName.endswith(".npy"):
                     clusteredData = np.load(open('outputData/analysisFiles/clusteredData/'+clusterSelectionFileName,'rb'))
                     clusteredData = scaledData.assign(Cluster=list(map(str,clusteredData))).set_index('Cluster', append=True)
+                clusterReset = clusteredData.reset_index()
+                clusterReset['Cluster'] = clusterReset['Cluster'].astype(str)
+                clusteredMI = pd.MultiIndex.from_frame(clusterReset.iloc[:,:len(clusteredData.index.names)],names=clusteredData.index.names)
+                newClusteredData = pd.DataFrame(clusterReset.iloc[:,len(clusteredData.index.names):],index=clusteredMI,columns=clusteredData.columns)
+                newClusteredData.columns.name = clusteredData.columns.name
+                clusteredData = newClusteredData
                 #If we use pre-existing cluster labels to create a supervised umap, we will automatically be creating a new dimensional reduction; there will be no user input 
                 if supervisedBool.get():
                     cluster_labels = list(clusteredData.index.get_level_values('Cluster'))
