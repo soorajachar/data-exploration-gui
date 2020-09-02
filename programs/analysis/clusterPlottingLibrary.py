@@ -43,8 +43,6 @@ def significanceTesting(featureDf2,pairwiseClustersToCompare,confidence=0.05,fol
     endog = featureDf2.iloc[:,:-1]
     exog = featureDf2.iloc[:,-1]
     modelFormula = " + ".join("Q(\'"+featureDf2.columns[:-1]+"\')")+" ~ Cluster"
-    print(featureDf2)
-    sys.exit(0)
     manova = MANOVA.from_formula(modelFormula,data=featureDf2)
     #Pillai's trace is most robust against deviations from assumptions of manova
     manovapval = manova.mv_test().results['Cluster']['stat'].iloc[1,4]
