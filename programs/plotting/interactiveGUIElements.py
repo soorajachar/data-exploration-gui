@@ -76,9 +76,10 @@ def createParameterSelectionDropdownsWithIndividualLevels(dropdownWindow,paramet
     maxLevelLen = 0
     maxLevelValueLen = 0
     for level in parameterValueDict['hue']:
-        if level in list(experimentParameters['allLevelValues'].keys())+['CellType','Cluster']:
-            if level in list(experimentParameters['allLevelValues'].keys()):
-                individualLevelValues = experimentParameters['allLevelValues'][level]
+        #Changed from allLevelValues to levelLabelDict
+        if level in list(experimentParameters['levelLabelDict'].keys())+['CellType','Cluster']:
+            if level in list(experimentParameters['levelLabelDict'].keys()):
+                individualLevelValues = experimentParameters['levelLabelDict'][level]
             elif level == 'Cluster':
                 individualLevelValues = list(map(str,sorted(list(map(int,list(pd.unique(plottingDf['Cluster'])))))))
             else:
