@@ -74,12 +74,16 @@ class ExperimentSetupStartPage(tk.Frame):
             #Tube mode
             else:
                 fcsFiles = []
+                
                 if 'A1_cell.csv' not in os.listdir('inputData/bulkCSVFiles/'):
-                    for fcsName in os.listdir('inputData/fcsFiles'):
-                        if '.fcs' in fcsName:
-                            fcsFiles.append(fcsName)
-                    if len(fcsFiles) == 0:
-                        fcsFiles = ['                 ']
+                    if len(os.listdir('inputData/fcsFiles')) > 1:
+                        for fcsName in os.listdir('inputData/fcsFiles'):
+                            if '.fcs' in fcsName:
+                                fcsFiles.append(fcsName)
+                        if len(fcsFiles) == 0:
+                            fcsFiles = ['                 ']
+                    elif 'sampleNameFile.xlsx' in os.listdir('misc'):
+                        fcsFiles = list(pd.read_excel('misc/sampleNameFile.xlsx',header=0).iloc[:,0].values.ravel())
                 else:
                     bulkStatFile = pd.read_csv('inputData/bulkCSVFiles/A1_cell.csv')
                     for row in range(bulkStatFile.shape[0]):
