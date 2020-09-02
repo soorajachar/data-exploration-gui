@@ -134,7 +134,12 @@ class ClusterComparisonHomePage(tk.Frame):
             #If we are using cluster labels
             else:
                 clusterSelectionFileName = self.ClusterCombo.get()
-                clusteredData = pickle.load(open('outputData/analysisFiles/clusteredData/'+clusterSelectionFileName,'rb'))
+                #new Justin: default is pkl; if generated from biowulf, you need to merge npy with scaled data
+                if clusterSelectionFileName.endswith(".pkl"):
+                    clusteredData = pickle.load(open('outputData/analysisFiles/clusteredData/'+clusterSelectionFileName,'rb'))
+                elif clusterSelectionFileName.endswith(".npy"):
+                    clusteredData = np.load(open('outputData/analysisFiles/clusteredData/'+clusterSelectionFileName,'rb'))
+                    clusteredData = scaledData.assign(Cluster=list(map(str,clusteredData))).set_index('Cluster', append=True)
                 #If we use pre-existing cluster labels to create a supervised umap, we will automatically be creating a new dimensional reduction; there will be no user input 
                 if supervisedBool.get():
                     cluster_labels = list(clusteredData.index.get_level_values('Cluster'))
@@ -143,7 +148,12 @@ class ClusterComparisonHomePage(tk.Frame):
                     master.switch_frame(ClusterComparisonPage,scaledData,reducedData,clusteredData)
                 else:
                     reductionFileName = self.DimRedCombo.get()
-                    reducedData = pickle.load(open('outputData/analysisFiles/reducedData/'+reductionFileName,'rb'))
+                  #new Justin: default is a pkl.  If you genereated files from the biowulf, you would have an HDF, which needs minor renaming
+                    if reductionFileName.endswith(".pkl"):
+                        reducedData = pickle.load(open('outputData/analysisFiles/reducedData/'+reductionFileName,'rb'))
+                    elif reductionFileName.endswith(".hdf"):
+                        reducedData = pd.read_hdf('outputData/analysisFiles/reducedData/'+reductionFileName, key='df')
+                        reducedData.rename(columns={'UMAP 1': 'Dimension 1', 'UMAP 2': 'Dimension 2'}, inplace=True)
                     master.switch_frame(ClusterComparisonPage,scaledData,reducedData,clusteredData)
 
         buttonWindow = tk.Frame(self)
