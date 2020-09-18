@@ -199,16 +199,17 @@ def createPlateSingleCellDataFrame(folderName,experimentParameters,levelLayout):
     sampleIndex = pd.MultiIndex.from_arrays([levelLayout['plateID'].ravel(),levelLayout['wellID'].ravel()],names=['Plate','Well'])
     sampleKeyDf = pd.DataFrame(unraveledKeyMatrix,index=sampleIndex,columns=list(experimentParameters['levelLabelDict'].keys()))
     sampleDf = sampleKeyDf.copy()
+    rowsToKeep = []
+     
     for row in range(sampleDf.shape[0]):
         for col in range(sampleDf.shape[1]):
             level = list(experimentParameters['levelLabelDict'].keys())[col]
             levelValueIndex = sampleKeyDf.iloc[row,col]
-            levelValue = experimentParameters['levelLabelDict'][level][levelValueIndex]
             if unraveledBlankMatrix[row] == -1:
+                levelValue = experimentParameters['levelLabelDict'][level][levelValueIndex]
                 sampleDf.iloc[row,col] = levelValue
             else:
-                sampleDf.iloc[row,col] = 'Blank' 
-
+                sampleDf.iloc[row,col] = 'Blank'
     #Drop blanks
     sampleDf = sampleDf.query("Time != 'Blank'")
     sampleDf.to_excel('outputData/excelFiles/fcsLabelingKey.xlsx')
@@ -243,7 +244,12 @@ def createPlateSingleCellDataFrame(folderName,experimentParameters,levelLayout):
             wellID = sampleID[1]
             sampleFileName = orderValDict[plateID][wellID]
             sampleList.append(sampleFileName)
-            sampleTuple = [cellType]+sampleDf.loc[idx[plateID,wellID],:].values.tolist()
+            if type(cellType) != list:
+                if type(cellType) == tuple:
+                    cellType = list(cellType)
+                else:
+                    cellType = [cellType]
+            sampleTuple = cellType+sampleDf.loc[idx[plateID,wellID],:].values.tolist()
             sampleTupleList.append(sampleTuple)
         sampleMI = pd.MultiIndex.from_tuples(sampleTupleList,names=['CellType']+list(sampleDf.columns))
         newSampleDf = pd.DataFrame(sampleList,index=sampleMI,columns=['fileName'])
