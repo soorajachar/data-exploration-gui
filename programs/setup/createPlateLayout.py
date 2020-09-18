@@ -742,7 +742,7 @@ class PlateLayoutPage(tk.Frame):
             inidx = np.all(np.logical_and(ll <= self.currentLayout.values[:,:2], self.currentLayout.values[:,:2] <= ur), axis=1)
             inbox = self.currentLayout.loc[inidx]
             changedInbox = inbox.copy().loc[inbox.blank != 0,:]
-            #Remove blank wells from selection to change: TODO
+            #Remove blank wells from selection to change
             self.storedSelection = changedInbox['key'].values
         
         def pasteSelection():
@@ -752,9 +752,13 @@ class PlateLayoutPage(tk.Frame):
             inidx = np.all(np.logical_and(ll <= self.currentLayout.values[:,:2], self.currentLayout.values[:,:2] <= ur), axis=1)
             inbox = self.currentLayout.loc[inidx]
             changedInbox = inbox.copy().loc[inbox.blank != 0,:]
-            #Remove blank wells from selection to change: TODO
+            #Remove blank wells from selection to change
+            inidx2 = inidx.copy()
+            for row in range(self.currentLayout.shape[0]):
+                if self.currentLayout.iloc[row,:]['blank'] == 0:
+                    inidx2[row] = False
             changedInbox.loc[:,'key'] = self.storedSelection
-            self.currentLayout.loc[inidx] = changedInbox
+            self.currentLayout.loc[inidx2] = changedInbox
             updateExperimentPlot()
 
         def operateOnSelection(action,area,direction):
