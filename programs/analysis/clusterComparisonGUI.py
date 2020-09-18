@@ -30,6 +30,7 @@ from dataFrameValueSelectionGUI import DataSelectionHomePage
 import operateOnDataSelection as ods
 import clusterPlottingLibrary as cpl 
 from dimensionReductionGUI import DimensionReductionHomePage 
+#from singleCellPlottingFunctions import facetedSingleCellScatter
 sys.path.insert(0, '../plotting/')
 import interactiveGUIElements as ipe
 
@@ -355,6 +356,7 @@ class ClusterComparisonPage(tk.Frame):
         clusterSelectionAxis = figSelection.add_subplot(gsSelection[0])
         clusterSelectionAxis.set_title('Group Selection')
         reducedPlottingDf = reducedData.reset_index()
+        #g1 = facetedSingleCellScatter(data=reducedPlottingDf, x=reducedData.columns[0],y=reducedData.columns[1],palette=['#808080']) 
         g1 = sns.scatterplot(data=reducedPlottingDf,x='Dimension 1',y='Dimension 2',ax=clusterSelectionAxis,alpha=0.7,color='#808080',**sizeParam)
         if clusterSelectionAxis.legend_ is not None:
             clusterSelectionAxis.legend_.remove()
@@ -387,7 +389,8 @@ class ClusterComparisonPage(tk.Frame):
             newpalette = ['#808080']+palette[:len(clusterComparisonDict.keys())]
             if len(selectionPlottingDf[selectionPlottingDf['Cluster'] == '0']) == 0:
                 newpalette = newpalette[1:]
-            g1 = sns.scatterplot(data=selectionPlottingDf,x='Dimension 1',y='Dimension 2',hue='Cluster',ax=clusterSelectionAxis,alpha=0.7,palette=newpalette,**sizeParam)
+            g1 = facetedSingleCellScatter(data=reducedPlottingDf, x=reducedData.columns[0],y=reducedData.columns[1]) 
+            #g1 = sns.scatterplot(data=selectionPlottingDf,x='Dimension 1',y='Dimension 2',hue='Cluster',ax=clusterSelectionAxis,alpha=0.7,palette=newpalette,**sizeParam)
             if clusterSelectionAxis.legend_ is not None:
                 clusterSelectionAxis.legend_.remove()
             for clusterCentroid in clusterCentroidList:

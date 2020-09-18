@@ -250,11 +250,13 @@ class BlankSelectionPage(tk.Frame):
             self.canvas.draw()
         
         def clearWells():
-            self.currentLayout = baseLayoutDf.copy()
-            g1 = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,style='key',color=['#ffffff'],markers=['o','X'],style_order=[-1,0])
-            g1 = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,marker='o',alpha=0.5,color=['#808080'])
-            fig_ax1.legend_.remove()
-            self.canvas.draw()
+            MsgBox = tk.messagebox.askquestion ('Warning','Are you sure you want to clear all wells?',icon = 'warning')
+            if MsgBox == 'yes':
+                self.currentLayout = baseLayoutDf.copy()
+                g1 = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,style='key',color=['#ffffff'],markers=['o','X'],style_order=[-1,0])
+                g1 = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,marker='o',alpha=0.5,color=['#808080'])
+                fig_ax1.legend_.remove()
+                self.canvas.draw()
         
         def collectInputs():
             master.switch_frame(PlateLayoutPage,folderName,self.currentLayout['key'],levels,levelValues,maxNumLevelValues,numRowPlates,numColumnPlates,plateDimensions)
@@ -291,7 +293,8 @@ class BlankSelectionPage(tk.Frame):
         selectionWindow.grid(row=4,column=0)
         tk.Button(selectionWindow, text="Deselect Wells",command=lambda: selectWells(False)).grid(row=0,column=0)
         tk.Button(selectionWindow, text="Select Wells",command=lambda: selectWells(True)).grid(row=0,column=1)
-        tk.Button(selectionWindow, text="Clear All Wells",command=lambda: clearWells()).grid(row=0,column=2)
+        
+        tk.Button(self, text="Clear All Wells",command=lambda: clearWells()).grid(row=6,column=0)
         
         actionWindow = tk.Frame(self)
         actionWindow.grid(row=5,column=0)
@@ -299,7 +302,7 @@ class BlankSelectionPage(tk.Frame):
         tk.Button(actionWindow, text="Repeat Plate Vertically",command=lambda: repeatSelection('v')).grid(row=0,column=1)
 
         buttonWindow = tk.Frame(self)
-        buttonWindow.grid(row=6,column=0)
+        buttonWindow.grid(row=7,column=0)
         
         tk.Button(buttonWindow, text="OK",command=lambda: collectInputs(),font='Helvetica 14 bold').grid(row=0,column=0)
         tk.Button(buttonWindow, text="Back",command=lambda: master.switch_frame(secondaryhomepage,folderName,bPage)).grid(row=0,column=1)
@@ -520,11 +523,13 @@ class PlateLayoutPage(tk.Frame):
             self.canvas.draw()
         
         def clearWells():
-            self.currentLayout = baseLayoutDf.copy()
-            g1 = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,markers=['o','X'],style='blank',style_order=[-1,0],color='#ffffff')
-            g1 = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,markers=['o','X'],alpha=0.5,style='blank',style_order=[-1,0],color='#808080')
-            fig_ax1.legend_.remove()
-            self.canvas.draw()
+            MsgBox = tk.messagebox.askquestion ('Warning','Are you sure you want to clear all wells?',icon = 'warning')
+            if MsgBox == 'yes':
+                self.currentLayout = baseLayoutDf.copy()
+                g1 = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,markers=['o','X'],style='blank',style_order=[-1,0],color='#ffffff')
+                g1 = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,markers=['o','X'],alpha=0.5,style='blank',style_order=[-1,0],color='#808080')
+                fig_ax1.legend_.remove()
+                self.canvas.draw()
         
         def changeLevelValue(advance):
             if advance:
@@ -729,6 +734,28 @@ class PlateLayoutPage(tk.Frame):
                 changedInbox['key'] = -1
                 self.currentLayout.loc[inidx] = changedInbox 
                 updatePlatePlot(changedInbox,0)
+        
+        def copySelection():
+            wellSelectionBox = toggle_selector.RS.corners
+            ll = np.array([wellSelectionBox[0][0], wellSelectionBox[1][0]])  # lower-left
+            ur = np.array([wellSelectionBox[0][2], wellSelectionBox[1][2]])  # upper-right
+            inidx = np.all(np.logical_and(ll <= self.currentLayout.values[:,:2], self.currentLayout.values[:,:2] <= ur), axis=1)
+            inbox = self.currentLayout.loc[inidx]
+            changedInbox = inbox.copy().loc[inbox.blank != 0,:]
+            #Remove blank wells from selection to change: TODO
+            self.storedSelection = changedInbox['key'].values
+        
+        def pasteSelection():
+            wellSelectionBox = toggle_selector.RS.corners
+            ll = np.array([wellSelectionBox[0][0], wellSelectionBox[1][0]])  # lower-left
+            ur = np.array([wellSelectionBox[0][2], wellSelectionBox[1][2]])  # upper-right
+            inidx = np.all(np.logical_and(ll <= self.currentLayout.values[:,:2], self.currentLayout.values[:,:2] <= ur), axis=1)
+            inbox = self.currentLayout.loc[inidx]
+            changedInbox = inbox.copy().loc[inbox.blank != 0,:]
+            #Remove blank wells from selection to change: TODO
+            changedInbox.loc[:,'key'] = self.storedSelection
+            self.currentLayout.loc[inidx] = changedInbox
+            updateExperimentPlot()
 
         def operateOnSelection(action,area,direction):
             
@@ -923,18 +950,25 @@ class PlateLayoutPage(tk.Frame):
                     tk.messagebox.showinfo("Duplicate well labels", "These wells (plateID/wellID) have duplicate labels. Please correct them and try again:\n\n"+', '.join(nonUniquePositions))
             else:
                 print('Not all levels arranged')
-
+        
         selectionWindow = tk.Frame(self)
         selectionWindow.grid(row=4,column=0)
         advanceVar = tk.StringVar()
         advanceVar.set('yes')
-        tk.Checkbutton(selectionWindow,text="Immediately advance to next level value",variable=advanceVar,onvalue='yes',offvalue='no').grid(row=0,column=3)
         tk.Button(selectionWindow, text="Deselect Wells",command=lambda: selectWells(False,advanceVar.get())).grid(row=0,column=0)
         tk.Button(selectionWindow, text="Select Wells",command=lambda: selectWells(True,advanceVar.get())).grid(row=0,column=1)
-        tk.Button(selectionWindow, text="Clear All Wells",command=lambda: clearWells()).grid(row=0,column=2)
-
+        
+        tk.Checkbutton(self,text="Immediately advance level value",variable=advanceVar,onvalue='yes',offvalue='no').grid(row=5,column=0)
+        
+        editWindow = tk.Frame(self)
+        editWindow.grid(row=6,column=0)
+        tk.Button(editWindow, text="Copy selection",command=lambda: copySelection()).grid(row=0,column=0)
+        tk.Button(editWindow, text="Paste selection",command=lambda: pasteSelection()).grid(row=0,column=1)
+        
+        tk.Button(self, text="Clear All Wells",command=lambda: clearWells()).grid(row=8,column=0)
+        
         actionWindow = tk.Frame(self)
-        actionWindow.grid(row=5,column=0)
+        actionWindow.grid(row=7,column=0)
 
         actionVar = tk.StringVar()
         actionVar.set('tile')
@@ -960,7 +994,7 @@ class PlateLayoutPage(tk.Frame):
         tk.Button(actionWindow, text="Perform Action",command=lambda: operateOnSelection(actionVar.get(),areaVar.get(),directionVar.get())).grid(row=0,column=3,rowspan=2)
 
         buttonWindow = tk.Frame(self)
-        buttonWindow.grid(row=6,column=0)
+        buttonWindow.grid(row=9,column=0)
         
         self.FinishButton = tk.Button(buttonWindow, text="Finish",command=lambda: collectInputs(),font='Helvetica 14 bold')
         self.FinishButton.grid(row=0,column=0)
