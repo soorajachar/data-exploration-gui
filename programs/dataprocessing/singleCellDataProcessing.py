@@ -4,6 +4,7 @@ from sys import platform as sys_pf
 if sys_pf == 'darwin':
     import matplotlib
     matplotlib.use("TkAgg")
+import tkinter as tk
 import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns
@@ -195,17 +196,23 @@ def createPlateSingleCellDataFrame(folderName,experimentParameters,levelLayout):
     completeKeyMatrix = np.dstack(list(levelLayout['keys'].values()))
     unraveledKeyMatrix = np.reshape(completeKeyMatrix,(completeKeyMatrix.shape[0]*completeKeyMatrix.shape[1],completeKeyMatrix.shape[2]))
     unraveledBlankMatrix = levelLayout['blank'].ravel()
+    #print(unraveledBlankMatrix)
 
     sampleIndex = pd.MultiIndex.from_arrays([levelLayout['plateID'].ravel(),levelLayout['wellID'].ravel()],names=['Plate','Well'])
     sampleKeyDf = pd.DataFrame(unraveledKeyMatrix,index=sampleIndex,columns=list(experimentParameters['levelLabelDict'].keys()))
     sampleDf = sampleKeyDf.copy()
     rowsToKeep = []
-     
+    
+    #print(sampleKeyDf.iloc[:,3].values.ravel())
     for row in range(sampleDf.shape[0]):
+        print('row')
+        print(row)
         for col in range(sampleDf.shape[1]):
             level = list(experimentParameters['levelLabelDict'].keys())[col]
+            print(level)
             levelValueIndex = sampleKeyDf.iloc[row,col]
             if unraveledBlankMatrix[row] == -1:
+                print(experimentParameters['levelLabelDict'][level])
                 levelValue = experimentParameters['levelLabelDict'][level][levelValueIndex]
                 sampleDf.iloc[row,col] = levelValue
             else:
@@ -254,7 +261,7 @@ def createPlateSingleCellDataFrame(folderName,experimentParameters,levelLayout):
         sampleMI = pd.MultiIndex.from_tuples(sampleTupleList,names=['CellType']+list(sampleDf.columns))
         newSampleDf = pd.DataFrame(sampleList,index=sampleMI,columns=['fileName'])
         newSampleDfList.append(newSampleDf)
-
+    
     fileNameDf = pd.concat(newSampleDfList)
 
     bothBool = False
@@ -270,6 +277,9 @@ def createPlateSingleCellDataFrame(folderName,experimentParameters,levelLayout):
         levelValues = list(fileNameDf.iloc[row,:].name) 
         fcsDf = pd.read_csv(fullFileName,header=0)
         eventNumber = fcsDf.shape[0]
+        if eventNumber == 0:
+            tk.messagebox.showerror("Error", "Filename:\n"+fullFileName+"\nhas no events. Please re-export this file and try again.")
+            sys.exit(0)
         eventList = range(1,eventNumber+1)
         allLevelValues = []
         for event in eventList:

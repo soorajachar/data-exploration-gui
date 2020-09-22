@@ -328,6 +328,7 @@ def convertDataFramesToExcel(folderName,secondPath,dataType,df,useModifiedDf):
     print(dataType[0].upper()+dataType[1:]+' Excel file Saved')
 
 def saveFinalDataFrames(folderName,secondPath,experimentNumber,dataType,fullExperimentDf,excel_data):
+    fullExperimentDf = fullExperimentDf.astype(float)
     with open('outputData/pickleFiles/'+dataTypeDataFrameFileNames[dataType]+'-'+folderName+'.pkl', "wb") as f:
         pickle.dump(fullExperimentDf, f)
     convertDataFramesToExcel(folderName,secondPath,dataType,fullExperimentDf,False)

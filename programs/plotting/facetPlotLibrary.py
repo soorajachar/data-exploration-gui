@@ -20,8 +20,7 @@ import facetPlot3D as fp3D
 idx = pd.IndexSlice
 plotFolderName = 'plots'
 def produceSubsettedDataFrames(fulldf,withinFigureBoolean,specificValueBooleanList,trueLabelDict):
-    print(withinFigureBoolean)
-    print(specificValueBooleanList)
+    fulldf = fulldf.astype(float)
     #Get all possible subsetted indices
     figureSubsettedLevelValues = []
     withinFigureSubsettedLevelValues = []
@@ -448,10 +447,6 @@ def plotSubsettedFigure(subsettedDf,plottingDf,kwargs,facetgridkwargs,plotSpecif
     titleBool = True
     secondPathBool = False
     
-    #Sanitize plottingDf to have every level value be unique across levels
-    if subPlotType != 'heatmap':
-        plottingDf,kwargs = sanitizeSameValueLevels(plottingDf,kwargs)
-    
     #Add in sharex/sharey options
     if plotType != '1d':
         print(plotOptions['X']['share'])
@@ -493,15 +488,6 @@ def plotSubsettedFigure(subsettedDf,plottingDf,kwargs,facetgridkwargs,plotSpecif
     #2D plots (line and scatter); use relplot figure level seaborn function
     elif plotType == '2d':
         facetPlotType = fp2D
-        #Fix duck typing issue with replots: https://github.com/mwaskom/seaborn/issues/1653
-        if 'hue' in kwargs and isinstance(plottingDf[kwargs['hue']][0],str):
-            if plottingDf[kwargs['hue']][0].isnumeric():
-                for i,x in enumerate(kwargs['hue_order']):
-                    kwargs['hue_order'][i] = "$%s$" % x
-                plottingDf[kwargs['hue']] = ["$%s$" % x for x in plottingDf[kwargs['hue']]]
-        if 'size' in kwargs and isinstance(plottingDf[kwargs['size']][0],str):
-            if plottingDf[kwargs['size']][0].isnumeric():
-                plottingDf[kwargs['size']] = ["$%s$" % x for x in plottingDf[kwargs['size']]]
     #3D plots (heatmaps and 3d scatter/lineplots); use facet grid with appropriate axis level seaborn function
     elif plotType == '3d':
         facetPlotType = fp3D
