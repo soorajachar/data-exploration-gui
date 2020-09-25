@@ -77,7 +77,6 @@ def createTubeSingleCellDataFrame(folderName,experimentParameters,fileNameDf):
     fullFileName = ''
     for fileName in os.listdir(path):
         if '.DS' not in fileName:
-            print(fileName)
             fullFileName = fileName
             break
     prefix = fullFileName.split('_')[0]
@@ -120,7 +119,7 @@ def createTubeSingleCellDataFrame(folderName,experimentParameters,fileNameDf):
     #Remove extraneous markers (namely -h parameters)
     columnsToKeep = []
     for col,column in enumerate(completeDataFrame.columns):
-        if '-H' not in column and 'Time' not in column and '-W' not in column:
+        if '-H' not in column and 'Time' not in column and '-W' not in column and column != 'GFP' and column != 'LiveDead':
             columnsToKeep.append(col)
     completeDataFrame = completeDataFrame.iloc[:,columnsToKeep]
 
@@ -205,14 +204,11 @@ def createPlateSingleCellDataFrame(folderName,experimentParameters,levelLayout):
     
     #print(sampleKeyDf.iloc[:,3].values.ravel())
     for row in range(sampleDf.shape[0]):
-        print('row')
-        print(row)
         for col in range(sampleDf.shape[1]):
             level = list(experimentParameters['levelLabelDict'].keys())[col]
             print(level)
             levelValueIndex = sampleKeyDf.iloc[row,col]
             if unraveledBlankMatrix[row] == -1:
-                print(experimentParameters['levelLabelDict'][level])
                 levelValue = experimentParameters['levelLabelDict'][level][levelValueIndex]
                 sampleDf.iloc[row,col] = levelValue
             else:
@@ -299,7 +295,7 @@ def createPlateSingleCellDataFrame(folderName,experimentParameters,levelLayout):
     #Remove extraneous markers (namely -h parameters)
     columnsToKeep = []
     for col,column in enumerate(completeDataFrame.columns):
-        if '-H' not in column and 'Time' not in column and '-W' not in column:
+        if '-H' not in column and 'Time' not in column and '-W' not in column and column != 'GFP' and 'Live' not in column:
             columnsToKeep.append(col)
     completeDataFrame = completeDataFrame.iloc[:,columnsToKeep]
 
