@@ -581,7 +581,7 @@ class plotElementsGUIPage(tk.Frame):
             useModifiedDf = False
             sName = titleEntry.get()
             subsettedDfList,subsettedDfListTitles,figureLevels,levelValuesPlottedIndividually = fpl.produceSubsettedDataFrames(experimentDf.stack().to_frame('temp'),fullFigureLevelBooleanList,includeLevelValueList,self.tld)
-            fpl.plotFacetedFigures(folderName,plotType,subPlotType,dataType,subsettedDfList,subsettedDfListTitles,figureLevels,levelValuesPlottedIndividually,useModifiedDf,experimentDf,plotOptions,parametersSelected,addDistributionPoints,originalLevelValueOrders=experimentParameters['levelLabelDict'],subfolderName=sName,context=ipe.getRadiobuttonValues(contextRadiobuttonVarsDict)['context'],height=float(heightEntry.get()),aspect=float(widthEntry.get()),titleBool=ipe.getRadiobuttonValues(plotTitleRadiobuttonVarsDict)['plotTitle'],colwrap=int(colWrapEntry.get()),legendBool=ipe.getRadiobuttonValues(legendRadiobuttonVarsDict)['legend'],outlierBool=ipe.getRadiobuttonValues(outlierRadiobuttonVarsDict)['remove outliers'],plotAllVar=plotAllVar,titleAdjust=titleAdjustEntry.get(),plotSpecificDict = plotSpecificDict)
+            fpl.plotFacetedFigures(folderName,plotType,subPlotType,dataType,subsettedDfList,subsettedDfListTitles,figureLevels,levelValuesPlottedIndividually,useModifiedDf,experimentDf,plotOptions,parametersSelected,addDistributionPoints,originalLevelValueOrders=experimentParameters['levelLabelDict'],subfolderName=sName,context=ipe.getRadiobuttonValues(contextRadiobuttonVarsDict)['context'],height=float(heightEntry.get()),aspect=float(widthEntry.get()),titleBool=ipe.getRadiobuttonValues(plotTitleRadiobuttonVarsDict)['plotTitle'],colwrap=int(colWrapEntry.get()),legendBool=ipe.getRadiobuttonValues(legendRadiobuttonVarsDict)['legend'],cmap=cmapEntry.get(),plotAllVar=plotAllVar,titleAdjust=titleAdjustEntry.get(),plotSpecificDict = plotSpecificDict)
             
         titleWindow = tk.Frame(self)
         titleWindow.pack(side=tk.TOP,pady=10)
@@ -633,10 +633,16 @@ class plotElementsGUIPage(tk.Frame):
         titleAdjustEntry.insert(0, '')
         titleAdjustEntry.grid(row=1,column=0)
         
-        outlierWindow = tk.Frame(miscOptionsWindow)
-        outlierWindow.grid(row=0,column=6,sticky=tk.N)
-        outlierRadiobuttonList,outlierRadiobuttonVarsDict = ipe.createParameterSelectionRadiobuttons(outlierWindow,['remove outliers'],{'remove outliers':['yes','no']}) 
-        outlierRadiobuttonVarsDict['remove outliers'].set('no')
+        #outlierWindow = tk.Frame(miscOptionsWindow)
+        #outlierWindow.grid(row=0,column=6,sticky=tk.N)
+        #outlierRadiobuttonList,outlierRadiobuttonVarsDict = ipe.createParameterSelectionRadiobuttons(outlierWindow,['remove outliers'],{'remove outliers':['yes','no']}) 
+        #outlierRadiobuttonVarsDict['remove outliers'].set('no')
+        
+        cmapWindow = tk.Frame(miscOptionsWindow)
+        cmapWindow.grid(row=0,column=6,sticky=tk.N)
+        tk.Label(cmapWindow,text='Colormap:').grid(row=0,column=0)
+        cmapEntry = tk.Entry(cmapWindow,width=10)
+        cmapEntry.grid(row=1,column=0)
         
         if subPlotType == 'kde':
             #Scale to mode button
@@ -662,6 +668,6 @@ class plotElementsGUIPage(tk.Frame):
         def okCommand():
             master.switch_frame(PlotTypePage)
         
-        tk.Button(buttonWindow, text="OK",command=lambda: okCommand()).grid(row=len(scalingList)+4,column=0)
+        tk.Button(buttonWindow, text="Finish",command=lambda: okCommand()).grid(row=len(scalingList)+4,column=0)
         tk.Button(buttonWindow, text="Back",command=lambda: master.switch_frame(assignLevelsToParametersPage,includeLevelValueList)).grid(row=len(scalingList)+4,column=1)
         tk.Button(buttonWindow, text="Quit",command=lambda: quit()).grid(row=len(scalingList)+4,column=2)

@@ -98,6 +98,14 @@ def parseCytokineCSVHeaders(columns):
         newMultiIndexList.append([cytokine])
     return newMultiIndexList
 
+def performCommaCheck(fileName):
+    with open('inputData/bulkCSVFiles/'+fileName, 'r') as istr:
+        with open('inputData/bulkCSVFiles/'+fileName, 'w') as ostr:
+            for line in istr:
+                if line[-1] != ',':
+                    line = line.rstrip('\n') + ','
+                    print(line, file=ostr)
+
 #Create Calibration Curves, obtain LODs (limits of detection) of experiment
 def calibrateExperiment(folderName,secondPath,concUnit,concUnitPrefix,numberOfCalibrationSamples,initialStandardVolume):
     #Get cytokine calibration curve data
@@ -107,6 +115,7 @@ def calibrateExperiment(folderName,secondPath,concUnit,concUnitPrefix,numberOfCa
     calibrationNames = []
     kitNames = []
     for calibrationFileName in calibrationFileNames:
+        #performCommaCheck(calibrationFileName.split('/')[-1])
         newName = calibrationFileName.split('.')[0].split('_')[0].split('/')[-1]
         kitNames.append(newName)
     print(kitNames)

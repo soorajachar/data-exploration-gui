@@ -12,6 +12,7 @@ from matplotlib.colors import LogNorm,SymLogNorm
 sys.path.insert(0, '../dataProcessing/')
 from miscFunctions import returnGates,returnTicks
 from operator import itemgetter
+import colorcet as cc
 import facetPlot1D as fp1D
 import facetPlotCategorical as fpCategorical
 import facetPlot2D as fp2D
@@ -225,7 +226,7 @@ def subsetOriginalLevelValueOrders(unsubsettedOrders,subsettedDf,parameter):
             subsettedOrders.append(unsubsettedValue)
     return subsettedOrders
 
-def plotFacetedFigures(folderName,plotType,subPlotType,dataType,subsettedDfList,subsettedDfListTitles,figureParameters,levelsPlottedIndividually,useModifiedDf,fulldf,plotOptions,legendParameterToLevelNameDict,addDistributionPoints,alternateTitle='',originalLevelValueOrders = {},subfolderName='',context='notebook',height=3,aspect=1,titleBool='yes',colwrap=5,legendBool='yes',outlierBool='no',outlierZScore=3,plotAllVar=True,titleAdjust='',plotSpecificDict={}):
+def plotFacetedFigures(folderName,plotType,subPlotType,dataType,subsettedDfList,subsettedDfListTitles,figureParameters,levelsPlottedIndividually,useModifiedDf,fulldf,plotOptions,legendParameterToLevelNameDict,addDistributionPoints,alternateTitle='',originalLevelValueOrders = {},subfolderName='',context='notebook',height=3,aspect=1,titleBool='yes',colwrap=5,legendBool='yes',cmap='',outlierZScore=3,plotAllVar=True,titleAdjust='',plotSpecificDict={}):
     sns.set_context(context)
     sns.set_palette(sns.color_palette())
     global hei,asp,titleVar,legendVar
@@ -236,20 +237,20 @@ def plotFacetedFigures(folderName,plotType,subPlotType,dataType,subsettedDfList,
     zScoreCutoff = 3
     #Has issues with repeated values (aka CD54 shows up in TCells and APCs)
     for subsettedDf,subsettedDfTitle in zip(subsettedDfList,subsettedDfListTitles):
-        if outlierBool == 'yes':
-            beforeOutlierRemoval = subsettedDf.shape[0]
-            if plotOptions['Y']['axisScaling'] == 'Logarithmic':
-                minVal = min(subsettedDf.values)
-                if minVal <= 0:
-                    newSubsettedDf = subsettedDf.iloc[:,:]+abs(minVal)+1
-                else:
-                    newSubsettedDf = subsettedDf.copy()
-                newSubsettedDf = np.log10(newSubsettedDf)
-                subsettedDf = subsettedDf[(np.abs(stats.zscore(newSubsettedDf)) < outlierZScore).all(axis=1)]
-            else:
-                subsettedDf = subsettedDf[(np.abs(stats.zscore(subsettedDf)) < outlierZScore).all(axis=1)]
-            afterOutlierRemoval = subsettedDf.shape[0]
-            print(str(beforeOutlierRemoval-afterOutlierRemoval)+' outliers removed!')
+        #if outlierBool == 'yes':
+        #    beforeOutlierRemoval = subsettedDf.shape[0]
+        #    if plotOptions['Y']['axisScaling'] == 'Logarithmic':
+        #        minVal = min(subsettedDf.values)
+        #        if minVal <= 0:
+        #            newSubsettedDf = subsettedDf.iloc[:,:]+abs(minVal)+1
+        #        else:
+        #            newSubsettedDf = subsettedDf.copy()
+        #        newSubsettedDf = np.log10(newSubsettedDf)
+        #        subsettedDf = subsettedDf[(np.abs(stats.zscore(newSubsettedDf)) < outlierZScore).all(axis=1)]
+        #    else:
+        #        subsettedDf = subsettedDf[(np.abs(stats.zscore(subsettedDf)) < outlierZScore).all(axis=1)]
+        #    afterOutlierRemoval = subsettedDf.shape[0]
+        #    print(str(beforeOutlierRemoval-afterOutlierRemoval)+' outliers removed!')
             
         #Assign all levels to plot parameters in catplot/relplot; reassign x/y axis level names to desired x/y axis titles
         kwargs = {}
@@ -373,7 +374,7 @@ def plotFacetedFigures(folderName,plotType,subPlotType,dataType,subsettedDfList,
         else:
             fullTitleString = 'temporaryFirstPlot'
         if len(subsettedDf.index) > 0:
-            plotSubsettedFigure(subsettedDf,plottingDf,kwargs,facetgridkwargs,plotSpecificDict,plotType,subPlotType,dataType,fullTitleString,plotOptions,subsettedDfTitle,addDistributionPoints,alternateTitle,subfolderName,titleAdjust)
+            plotSubsettedFigure(subsettedDf,plottingDf,kwargs,facetgridkwargs,plotSpecificDict,plotType,subPlotType,dataType,fullTitleString,plotOptions,subsettedDfTitle,addDistributionPoints,alternateTitle,subfolderName,titleAdjust,cmap)
         if not plotAllVar:
             break
     sns.set_context('notebook')
@@ -442,7 +443,7 @@ def sanitizeSameValueLevels(plottingDf,kwargs):
     kwargs = reorderKwargs(oldKwargs,kwargs)
     return plottingDf,kwargs
 
-def plotSubsettedFigure(subsettedDf,plottingDf,kwargs,facetgridkwargs,plotSpecificKwargs,plotType,subPlotType,dataType,fullTitleString,plotOptions,subsettedDfTitle,addDistributionPoints,alternateTitle,subfolderName,titleAdjust):
+def plotSubsettedFigure(subsettedDf,plottingDf,kwargs,facetgridkwargs,plotSpecificKwargs,plotType,subPlotType,dataType,fullTitleString,plotOptions,subsettedDfTitle,addDistributionPoints,alternateTitle,subfolderName,titleAdjust,cmap):
 
     titleBool = True
     secondPathBool = False
@@ -463,6 +464,14 @@ def plotSubsettedFigure(subsettedDf,plottingDf,kwargs,facetgridkwargs,plotSpecif
     auxillaryKwargs['subPlotType'] = subPlotType
     auxillaryKwargs['facetgridkwargs'] = facetgridkwargs
     auxillaryKwargs['plotspecifickwargs'] = plotSpecificKwargs
+    if cmap != '':
+        if cmap == 'glasbey':
+            cmap = cc.glasbey[:len(pd.unique(plottingDf[kwargs['hue']]))]
+        cmapKwarg = {'palette':cmap}
+    else:
+        cmapKwarg = {}
+    auxillaryKwargs['cmap'] = cmapKwarg
+    
     #if hei != 5 and asp != 1:
     if plotType == '1d':
         plotOptions['Y']['figureDimensions'] = {'height':hei,'aspect':asp}

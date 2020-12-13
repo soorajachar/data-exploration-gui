@@ -206,7 +206,6 @@ def createPlateSingleCellDataFrame(folderName,experimentParameters,levelLayout):
     for row in range(sampleDf.shape[0]):
         for col in range(sampleDf.shape[1]):
             level = list(experimentParameters['levelLabelDict'].keys())[col]
-            print(level)
             levelValueIndex = sampleKeyDf.iloc[row,col]
             if unraveledBlankMatrix[row] == -1:
                 levelValue = experimentParameters['levelLabelDict'][level][levelValueIndex]
@@ -295,6 +294,7 @@ def createPlateSingleCellDataFrame(folderName,experimentParameters,levelLayout):
     #Remove extraneous markers (namely -h parameters)
     columnsToKeep = []
     for col,column in enumerate(completeDataFrame.columns):
+        #if '-H' not in column and 'Time' not in column and '-W' not in column:
         if '-H' not in column and 'Time' not in column and '-W' not in column and column != 'GFP' and 'Live' not in column:
             columnsToKeep.append(col)
     completeDataFrame = completeDataFrame.iloc[:,columnsToKeep]

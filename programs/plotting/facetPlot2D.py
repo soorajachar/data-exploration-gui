@@ -15,9 +15,9 @@ from matplotlib import colors,ticker
 def plot(plottingDf,subsettedDf,kwargs,facetKwargs,auxillaryKwargs,plotOptions):
     #Make sure there are markers at each column variable
     if 'style' not in kwargs.keys():
-        fg = sns.relplot(data=plottingDf,marker='o',kind=auxillaryKwargs['subPlotType'],facet_kws=facetKwargs,ci=False,**kwargs,**plotOptions['X']['figureDimensions'])
+        fg = sns.relplot(data=plottingDf,marker='o',kind=auxillaryKwargs['subPlotType'],facet_kws=facetKwargs,ci=False,**kwargs,**plotOptions['X']['figureDimensions'],**auxillaryKwargs['cmap'])
     else:
-        fg = sns.relplot(data=plottingDf,markers=True,kind=auxillaryKwargs['subPlotType'],facet_kws=facetKwargs,ci=False,**kwargs,**plotOptions['X']['figureDimensions'])
+        fg = sns.relplot(data=plottingDf,markers=True,kind=auxillaryKwargs['subPlotType'],facet_kws=facetKwargs,ci=False,**kwargs,**plotOptions['X']['figureDimensions'],**auxillaryKwargs['cmap'])
         
     #X and Y Axis Scaling for 2D plots
     for axis in plotOptions:

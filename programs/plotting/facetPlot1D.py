@@ -30,7 +30,7 @@ def plot(plottingDf,subsettedDf,kwargs,facetKwargs,auxillaryKwargs,plotOptions):
     #Will need to update to make sure it pulls from y axis variable
     yvar = kwargs.pop('y')
     if auxillaryKwargs['subPlotType'] == 'histogram':
-        fg = sns.FacetGrid(plottingDf,legend_out=True,**facetKwargs,**kwargs,**plotOptions['Y']['figureDimensions'])
+        fg = sns.FacetGrid(plottingDf,legend_out=True,**facetKwargs,**kwargs,**plotOptions['Y']['figureDimensions'],**auxillaryKwargs['cmap'])
         if plotOptions['Y']['axisScaling'] == 'Logarithmic':
             hist_kws = {'hist_kws':{'log':True}} 
         else:
@@ -38,7 +38,7 @@ def plot(plottingDf,subsettedDf,kwargs,facetKwargs,auxillaryKwargs,plotOptions):
         fg.map(sns.distplot,yvar,bins=256,kde=False,**hist_kws)
     elif auxillaryKwargs['subPlotType'] == 'kde':
         if auxillaryKwargs['dataType'] != 'singlecell':
-            fg = sns.FacetGrid(plottingDf,**facetKwargs,**kwargs,**plotOptions['Y']['figureDimensions'])
+            fg = sns.FacetGrid(plottingDf,**facetKwargs,**kwargs,**plotOptions['Y']['figureDimensions'],**auxillaryKwargs['cmap'])
             fg.map(sns.kdeplot,yvar,shade=False,bw=15)
         else:
             kwargIndices = []
@@ -68,11 +68,14 @@ def plot(plottingDf,subsettedDf,kwargs,facetKwargs,auxillaryKwargs,plotOptions):
             hist = hist[1:]
             numUniquePlots = len(uniqueKwargCombinations)
             histBins = np.tile(list(range(1,1024,4)),numUniquePlots)
-            smoothedHistBins = savgol_filter(hist, auxillaryKwargs['plotspecifickwargs']['smoothing']-1, 2) 
+            if auxillaryKwargs['plotspecifickwargs']['smoothing']-1 < 2:
+                smoothedHistBins = hist
+            else:
+                smoothedHistBins = savgol_filter(hist, auxillaryKwargs['plotspecifickwargs']['smoothing']-1, 2) 
             
             if not auxillaryKwargs['plotspecifickwargs']['scaleToMode']:
                 if plotOptions['Y']['axisScaling'] == 'Logarithmic':
-                    cutoff = 1
+                    cutoff = 0.5
                 else:
                     cutoff = 0
             else:
@@ -98,7 +101,7 @@ def plot(plottingDf,subsettedDf,kwargs,facetKwargs,auxillaryKwargs,plotOptions):
             newdf = pd.DataFrame(data,columns=columns,index=mi)
             plottingDf = newdf.reset_index()
             
-            fg = sns.relplot(data=plottingDf,kind='line',x='MFI',y=columns[1],facet_kws=facetKwargs,**kwargs,**plotOptions['Y']['figureDimensions'])
+            fg = sns.relplot(data=plottingDf,kind='line',x='MFI',y=columns[1],facet_kws=facetKwargs,**kwargs,**plotOptions['Y']['figureDimensions'],**auxillaryKwargs['cmap'])
 
             xtickValues,xtickLabels = returnTicks([-1000,1000,10000,100000])
             maxVal = max(subsettedDf.values)[0]
