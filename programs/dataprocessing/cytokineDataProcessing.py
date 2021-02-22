@@ -285,7 +285,7 @@ def calibrateExperiment(folderName,secondPath,concUnit,concUnitPrefix,numberOfCa
         fullpalette = sns.color_palette(sns.color_palette(),numCyt)
     else:
         fullpalette = sns.color_palette('hls',numCyt)
-    g = sns.relplot(data=plottingPointsDf,x=xaxistitle,y=yaxistitle,hue='Cytokine',col='Kit Name',kind='line',col_order=pd.unique(plottingPointsDf['Kit Name']),hue_order=pd.unique(plottingPointsDf['Cytokine']),height=10,palette=fullpalette)
+    g = sns.relplot(data=plottingPointsDf,x=xaxistitle,y=yaxistitle,hue='Cytokine',col='Kit Name',kind='line',col_order=pd.unique(plottingPointsDf['Kit Name']),hue_order=pd.unique(plottingPointsDf['Cytokine']),height=7,palette=fullpalette)
     #Plot vertical lines at lower and upper concentration limits of detection
     colorDict = {}
     for j,cytokine in enumerate(pd.unique(plottingPointsDf['Cytokine'])):
@@ -301,7 +301,7 @@ def calibrateExperiment(folderName,secondPath,concUnit,concUnitPrefix,numberOfCa
         g2 = sns.scatterplot(data=plottingStandardsDf[plottingStandardsDf['Kit Name'] == kitName],x=xaxistitle,y=yaxistitle,hue='Cytokine',ax=axis,legend=False,palette=currentpalette)
         axis.set_xscale('log')
         axis.set_yscale('log')
-    plt.savefig('plots/calibrationCurves-'+folderName+'-'+concUnitPrefix+'.png')
+    plt.savefig('plots/calibrationCurves-'+folderName+'-'+concUnitPrefix+'.png',bbox_inches='tight')
     #Save fitting parameters and LOD for curve fit for each cytokine
     with open('misc/fittingParameters-'+folderName+'-'+concUnitPrefix+'.pkl', "wb") as f:
         pickle.dump(fullFittingParametersDf, f)

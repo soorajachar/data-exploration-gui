@@ -21,7 +21,9 @@ import cytokineDataProcessing as cydp
 import cellDataProcessing as cdp
 import proliferationDataProcessing as pdp
 import singleCellDataProcessing as scdp
+import automatedCBAProcessingGUI as autoCBA
 import tkinter as tk
+
 
 pathToExperimentSpreadsheet = '../../experiments/'
 secondPath = '../../outputData'
@@ -59,20 +61,22 @@ class DataProcessingStartPage(tk.Frame):
       
         l3 = tk.Label(mainWindow, text="""Action: """).grid(row=0,column=1,sticky=tk.W)
         
-        cytDfButton = tk.Button(mainWindow,text='Create dataframes',command=lambda: createDataFrame('cyt'))
-        cytDfButton.grid(row=1,column=1,sticky=tk.W)
         cytCalibrationParametersButton = tk.Button(mainWindow,text='Enter CBA bead calibration parameters',command=lambda: master.switch_frame(cydp.CalibrationParameterPage,folderName,expNum,ex_data,DataProcessingStartPage,bPage))
+        cytCalibrationParametersButton.grid(row=1,column=1,sticky=tk.W)
+        cytCalibrationParametersButton = tk.Button(mainWindow,text='Create CBA gates',command=lambda: master.switch_frame(autoCBA.AutomateCBAStartPage,folderName,expNum,ex_data,DataProcessingStartPage,bPage))
         cytCalibrationParametersButton.grid(row=1,column=2,sticky=tk.W)
+        cytDfButton = tk.Button(mainWindow,text='Create dataframes',command=lambda: createDataFrame('cyt'))
+        cytDfButton.grid(row=1,column=3,sticky=tk.W)
 
         cellDfButton = tk.Button(mainWindow,text='Create dataframes',command=lambda: createDataFrame('cell'))
         cellDfButton.grid(row=2,column=1,sticky=tk.W)
         #cellAbPanelButton = tk.Button(mainWindow,text='Edit antibody panel',command=lambda: master.switch_frame(cdp.MarkerNumberPage,folderName,expNum,ex_data,DataProcessingStartPage,bPage))
         #cellAbPanelButton.grid(row=2,column=2,sticky=tk.W)
         
-        prolifDfButton = tk.Button(mainWindow,text='Create dataframes',command=lambda: createDataFrame('prolif'))
-        prolifDfButton.grid(row=3,column=1,sticky=tk.W)
         prolifGenerationGatesButton = tk.Button(mainWindow,text='Edit generation gates',command=lambda: master.switch_frame(pdp.GatingPage,folderName,expNum,ex_data,DataProcessingStartPage,bPage))
-        prolifGenerationGatesButton.grid(row=3,column=2,sticky=tk.W)
+        prolifGenerationGatesButton.grid(row=3,column=1,sticky=tk.W)
+        prolifDfButton = tk.Button(mainWindow,text='Create dataframes',command=lambda: createDataFrame('prolif'))
+        prolifDfButton.grid(row=3,column=2,sticky=tk.W)
 
         #completeSingleCellDfButton = tk.Button(mainWindow,text='Create complete dataframes')
         #completeSingleCellDfButton.grid(row=4,column=2,sticky=tk.W)

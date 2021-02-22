@@ -313,7 +313,7 @@ def createLayoutVisual(baseLayoutDf,currentLayout,levelIndex,currentLevel,levelV
     maxTextLen = len(str(currentLevel))
     for levelVal in levelValues[levelIndex]:
         if len(str(levelVal)) > maxTextLen:
-            maxTextLen = len(levelVal)
+            maxTextLen = len(str(levelVal))
     
     if numRowPlates == 1 and numColumnPlates > colwrap:
         colwrapBool = True
