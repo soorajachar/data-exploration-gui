@@ -15,8 +15,6 @@ from miscFunctions import setMaxWidth
 from dataProcessingGUI import DataProcessingStartPage
 sys.path.insert(0, 'programs/plotting')
 from plottingGUI import PlotExperimentWindow 
-sys.path.insert(0, 'programs/analysis')
-from analysisGUI import AnalysisStartPage
 
 #Root class; handles frame switching in gui
 class MainApp(tk.Tk):
@@ -190,12 +188,12 @@ class ExperimentActionWindow(tk.Frame):
         rb1a = tk.Radiobutton(mainWindow, text="Setup experiment",padx = 20, variable=v, value='se')
         rb1b = tk.Radiobutton(mainWindow,text="Process experiment",padx = 20, variable=v, value='pd')
         rb1c = tk.Radiobutton(mainWindow,text="Plot experiment",padx = 20, variable=v, value='plt')
-        rb1d = tk.Radiobutton(mainWindow,text="Analyze experiment",padx = 20, variable=v, value='ae')
+        #rb1d = tk.Radiobutton(mainWindow,text="Analyze experiment",padx = 20, variable=v, value='ae')
         l1.grid(row=0,column=0)
         rb1a.grid(row=1,column=0,sticky=tk.W)
         rb1b.grid(row=2,column=0,sticky=tk.W)
         rb1c.grid(row=3,column=0,sticky=tk.W)
-        rb1d.grid(row=4,column=0,sticky=tk.W)
+        #rb1d.grid(row=4,column=0,sticky=tk.W)
         
         def collectInput():
             action = v.get()
@@ -205,8 +203,6 @@ class ExperimentActionWindow(tk.Frame):
                 master.switch_frame(DataProcessingStartPage,selectedExperiment,32,[],ExperimentActionWindow)
             elif action == 'plt':
                 master.switch_frame(PlotExperimentWindow,selectedExperiment,ExperimentActionWindow)
-            elif action == 'ae':
-                master.switch_frame(AnalysisStartPage,selectedExperiment,ExperimentActionWindow)
         
         def backCommand():
             os.chdir(master.homedirectory)

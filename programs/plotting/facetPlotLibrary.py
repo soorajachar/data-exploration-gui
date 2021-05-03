@@ -12,7 +12,6 @@ from matplotlib.colors import LogNorm,SymLogNorm
 sys.path.insert(0, '../dataProcessing/')
 from miscFunctions import returnGates,returnTicks
 from operator import itemgetter
-import colorcet as cc
 import facetPlot1D as fp1D
 import facetPlotCategorical as fpCategorical
 import facetPlot2D as fp2D
@@ -466,6 +465,7 @@ def plotSubsettedFigure(subsettedDf,plottingDf,kwargs,facetgridkwargs,plotSpecif
     auxillaryKwargs['plotspecifickwargs'] = plotSpecificKwargs
     if cmap != '':
         if cmap == 'glasbey':
+            import colorcet as cc
             cmap = cc.glasbey[:len(pd.unique(plottingDf[kwargs['hue']]))]
         cmapKwarg = {'palette':cmap}
     else:

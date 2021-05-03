@@ -9,7 +9,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
 from modifyDataFrames import returnModifiedDf
 from miscFunctions import reindexDataFrame,printProgressBar,extractValues,reorderDfByInputOrder,returnSpecificExtensionFiles
 idx = pd.IndexSlice
@@ -178,7 +177,7 @@ def demultiplexSingleCellData(experimentParameters):
     with open('misc/fileNameDict.pkl','wb') as f:
         pickle.dump(fileNameDict,f)
 
-def createPlateSingleCellDataFrame(folderName,experimentParameters,levelLayout):
+def createPlateSingleCellDataFrame(folderName,experimentParameters,levelLayout,useBlankWells):
     
     path = 'inputData/singleCellCSVFiles/'
     if 'unpackingDict' in experimentParameters:
@@ -273,8 +272,13 @@ def createPlateSingleCellDataFrame(folderName,experimentParameters,levelLayout):
         fcsDf = pd.read_csv(fullFileName,header=0)
         eventNumber = fcsDf.shape[0]
         if eventNumber == 0:
-            tk.messagebox.showerror("Error", "Filename:\n"+fullFileName+"\nhas no events. Please re-export this file and try again.")
-            sys.exit(0)
+            if not useBlankWells:
+                tk.messagebox.showerror("Error", "Filename:\n"+fullFileName+"\nhas no events. Please re-export this file and try again.")
+                sys.exit(0)
+            else:
+                newMatrix = np.zeros([1,fcsDf.shape[1]])
+                fcsDf = pd.DataFrame(newMatrix,columns=fcsDf.columns)
+                eventNumber+=1
         eventList = range(1,eventNumber+1)
         allLevelValues = []
         for event in eventList:

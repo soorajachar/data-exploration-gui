@@ -129,11 +129,16 @@ def unpackMultiplexedPlates(experimentParameters,folderName,dataType):
 
 def performCommaCheck(fileName):
     with open('inputData/bulkCSVFiles/'+fileName, 'r') as istr:
-        with open('inputData/bulkCSVFiles/'+fileName, 'w') as ostr:
+        with open('inputData/bulkCSVFiles/temp-'+fileName, 'w') as ostr:
             for line in istr:
                 if line[-1] != ',':
                     line = line.rstrip('\n') + ','
                     print(line, file=ostr)
+                else:
+                    line = line.rstrip('\n')
+                    print(line, file=ostr)
+    subprocess.run(['rm','inputData/bulkCSVFiles/'+fileName])
+    subprocess.run(['mv','inputData/bulkCSVFiles/temp-'+fileName,'inputData/bulkCSVFiles/'+fileName])
 
 def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataType,layoutDict):
     if experimentParameters['format'] == 'tube':
@@ -244,7 +249,8 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
             
         sortedData,sortedFiles = cleanUpFlowjoCSV(plateNames,folderName,dataType,experimentParameters)
         allRawData,newLevelList = returnMultiIndex(sortedData,sortedFiles,realDataType,folderName)
-            
+        
+        #print(allRawData)
         dfList = []
         for rawData,plateID in zip(allRawData,plateNames):
             fullTupleList = []
@@ -275,6 +281,10 @@ def createBaseDataFrame(experimentParameters,folderName,experimentNumber,dataTyp
                 columnSeries = pd.Series(rawData.values[:,column+1],index=mi)
                 columnSeriesList.append(columnSeries)
                 columnTupleList.append(tuple(columnTuple))
+            #print(columnTupleList)
+            #print(columnSeriesList)
+            #print(rawData)
+            #print(newLevelList)
             platedf = pd.concat(columnSeriesList,axis=0,keys=columnTupleList,names=dataTypeLevelNames[realDataType])
             dfList.append(platedf)
 

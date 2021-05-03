@@ -11,12 +11,9 @@ import tkinter as tk
 import itertools
 from matplotlib import pyplot as plt
 from scipy import stats
-from sklearn.manifold import TSNE
-from sklearn.preprocessing import MinMaxScaler
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.widgets import RectangleSelector
 import itertools
-sys.path.insert(0, '../dataprocessing/')
 from miscFunctions import rainbow_text
 
 idx = pd.IndexSlice
@@ -158,7 +155,7 @@ class BlankSelectionPage(tk.Frame):
         tk.Label(self,text='Blank Selection Page:',font=('Arial',20)).grid(row=0,column=0)
 
         plotFrame = tk.Frame(self)
-        plotFrame.grid(row=1,column=0)
+        plotFrame.grid(row=5,column=0)
         
         if plateDimensions[1] == 24:
             scalingFactor = 1.5
@@ -176,7 +173,7 @@ class BlankSelectionPage(tk.Frame):
         fig_ax1 = fig.add_subplot(gs[0])
 
         baseLayoutDf,infoDf,vlinelist,hlinelist = returnBaseLayout(plateDimensions,numRowPlates,numColumnPlates)
-        
+
         self.currentLayout = baseLayoutDf.copy()
         def modifyPlatePlot():
             #Remove all axis elements
@@ -198,14 +195,21 @@ class BlankSelectionPage(tk.Frame):
             for row in range(baseLayoutDf.shape[0]):
                 if infoDf.values[row][1] != 'DoNotLabel':
                     fig_ax1.annotate(infoDf.values[row][1],(baseLayoutDf.iloc[row,0]-0.6,baseLayoutDf.iloc[row,1]+0.5),size=7,ha='center',va='center')
-
-        g1 = sns.scatterplot(data=baseLayoutDf,x='x',y='y',ax=fig_ax1,color='#808080',s=200,marker='o',alpha=0.5)
-        modifyPlatePlot()
-
-        self.canvas = FigureCanvasTkAgg(fig,master=plotFrame)
-        self.canvas.draw()
-        self.canvas.get_tk_widget().pack()
         
+        self.canvas = FigureCanvasTkAgg(fig,master=plotFrame)
+        modifyPlatePlot()
+        self.path = sns.scatterplot(data=baseLayoutDf,x='x',y='y',ax=fig_ax1,color='#808080',s=200,marker='o',alpha=0.5)
+        self.canvas.draw()
+        self.background = self.canvas.copy_from_bbox(fig_ax1.bbox)
+        self.trueBackground = self.canvas.copy_from_bbox(fig_ax1.bbox)
+
+        #background = fig.canvas.copy_from_bbox(fig_ax1.bbox)
+        #modifyPlatePlot()
+
+        #self.canvas = FigureCanvasTkAgg(fig,master=plotFrame)
+        #self.canvas.draw()
+        self.canvas.get_tk_widget().pack()
+
         def line_select_callback(eclick, erelease):
             'eclick and erelease are the press and release events'
             x1, y1 = eclick.xdata, eclick.ydata
@@ -232,7 +236,6 @@ class BlankSelectionPage(tk.Frame):
             inidx = np.all(np.logical_and(ll <= self.currentLayout.values[:,:2], self.currentLayout.values[:,:2] <= ur), axis=1)
             inbox = self.currentLayout.loc[inidx]
             changedInbox = inbox.copy()
-
             if mark:
                 changedInbox['key'] = 0
                 self.currentLayout.loc[inidx] = changedInbox 
@@ -243,31 +246,44 @@ class BlankSelectionPage(tk.Frame):
                 updatePlatePlot(changedInbox)
         
         def updatePlatePlot(newlayout):
-            g1 = sns.scatterplot(data=newlayout,x='x',y='y',ax=fig_ax1,s=200,marker='o',color=['#ffffff'])
+            self.path = sns.scatterplot(data=newlayout,x='x',y='y',ax=fig_ax1,s=200,marker='o',color=['#ffffff'])
             #g1 = sns.scatterplot(data=newlayout,x='x',y='y',ax=fig_ax1,s=200,style='key',color=['#ffffff'],markers=['o','X'],style_order=[-1,0])
-            g1 = sns.scatterplot(data=newlayout,x='x',y='y',ax=fig_ax1,s=200,style='key',markers=['o','X'],style_order=[-1,0],alpha=0.5,hue_order=[-1,0],hue='key',palette=['#808080','#FF0000'])
+            self.path = sns.scatterplot(data=newlayout,x='x',y='y',ax=fig_ax1,s=200,style='key',markers=['o','X'],style_order=[-1,0],alpha=0.5,hue_order=[-1,0],hue='key',palette=['#808080','#FF0000'])
             fig_ax1.legend_.remove()
-            self.canvas.draw()
+            fig_ax1.draw_artist(self.path)
+            self.canvas.blit(fig_ax1.bbox)
+            self.background = self.canvas.copy_from_bbox(fig_ax1.bbox)
+            toggle_selector.RS.background = self.background 
+            #self.canvas.draw()
         
         def clearWells():
             MsgBox = tk.messagebox.askquestion ('Warning','Are you sure you want to clear all wells?',icon = 'warning')
             if MsgBox == 'yes':
                 self.currentLayout = baseLayoutDf.copy()
-                g1 = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,style='key',color=['#ffffff'],markers=['o','X'],style_order=[-1,0])
-                g1 = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,marker='o',alpha=0.5,color=['#808080'])
+                self.path = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,style='key',color=['#ffffff'],markers=['o','X'],style_order=[-1,0])
+                self.path = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,marker='o',alpha=0.5,color=['#808080'])
                 fig_ax1.legend_.remove()
-                self.canvas.draw()
+                self.canvas.restore_region(self.trueBackground)
+                self.canvas.blit(fig_ax1.bbox)
+                self.background = self.canvas.copy_from_bbox(fig_ax1.bbox)
+                toggle_selector.RS.background = self.background 
+                #self.currentLayout = baseLayoutDf.copy()
+                #self.canvas.draw()
         
         def collectInputs():
             master.switch_frame(PlateLayoutPage,folderName,self.currentLayout['key'],levels,levelValues,maxNumLevelValues,numRowPlates,numColumnPlates,plateDimensions)
 
         def updateExperimentPlot():
-            g1 = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,marker='o',color=['#ffffff'])
+            self.path = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,marker='o',color=['#ffffff'])
             #g1 = sns.scatterplot(data=newlayout,x='x',y='y',ax=fig_ax1,s=200,style='key',color=['#ffffff'],markers=['o','X'],style_order=[-1,0])
-            g1 = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,style='key',markers=['o','X'],style_order=[-1,0],alpha=0.5,hue_order=[-1,0],hue='key',palette=['#808080','#FF0000'])
+            self.path = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,style='key',markers=['o','X'],style_order=[-1,0],alpha=0.5,hue_order=[-1,0],hue='key',palette=['#808080','#FF0000'])
             fig_ax1.legend_.remove()
-            self.canvas.draw()
-        
+            fig_ax1.draw_artist(self.path)
+            self.canvas.blit(fig_ax1.bbox)
+            self.background = self.canvas.copy_from_bbox(fig_ax1.bbox)
+            toggle_selector.RS.background = self.background 
+            #self.canvas.draw()
+
         def repeatSelection(direction):
             reshapedList = []
             for column in self.currentLayout.columns:
@@ -290,19 +306,20 @@ class BlankSelectionPage(tk.Frame):
             updateExperimentPlot()
 
         selectionWindow = tk.Frame(self)
-        selectionWindow.grid(row=4,column=0)
+        selectionWindow.grid(row=1,column=0)
         tk.Button(selectionWindow, text="Deselect Wells",command=lambda: selectWells(False)).grid(row=0,column=0)
         tk.Button(selectionWindow, text="Select Wells",command=lambda: selectWells(True)).grid(row=0,column=1)
         
-        tk.Button(self, text="Clear All Wells",command=lambda: clearWells()).grid(row=6,column=0)
         
         actionWindow = tk.Frame(self)
-        actionWindow.grid(row=5,column=0)
+        actionWindow.grid(row=2,column=0)
         tk.Button(actionWindow, text="Repeat Plate Horizontally",command=lambda: repeatSelection('h')).grid(row=0,column=0)
         tk.Button(actionWindow, text="Repeat Plate Vertically",command=lambda: repeatSelection('v')).grid(row=0,column=1)
 
+        tk.Button(self, text="Clear All Wells",command=lambda: clearWells()).grid(row=3,column=0)
+        
         buttonWindow = tk.Frame(self)
-        buttonWindow.grid(row=7,column=0)
+        buttonWindow.grid(row=4,column=0)
         
         tk.Button(buttonWindow, text="OK",command=lambda: collectInputs(),font='Helvetica 14 bold').grid(row=0,column=0)
         tk.Button(buttonWindow, text="Back",command=lambda: master.switch_frame(secondaryhomepage,folderName,bPage)).grid(row=0,column=1)
@@ -412,7 +429,7 @@ def createLayoutVisual(baseLayoutDf,currentLayout,levelIndex,currentLevel,levelV
     plt.clf()
 
 class PlateLayoutPage(tk.Frame):
-    def __init__(self, master,folderName,blankWells,levels,levelValues,maxNumLevelValues,numRowPlates,numColumnPlates,plateDimensions):
+    def __init__(self, master,folderName,blankWells,levels,levelValues,maxNumLevelValues,numRowPlates,numColumnPlates,plateDimensions,dataType='cyt'):
         
         self.root = master.root
         tk.Frame.__init__(self, master)
@@ -420,7 +437,7 @@ class PlateLayoutPage(tk.Frame):
         tk.Label(self,text='Label Layout Page:',font=('Arial',20)).grid(row=0,column=0)
         
         plotFrame = tk.Frame(self)
-        plotFrame.grid(row=1,column=0)
+        plotFrame.grid(row=9,column=0)
         
         if numRowPlates == 1 and numColumnPlates > colwrap:
             colwrapBool = True
@@ -464,15 +481,14 @@ class PlateLayoutPage(tk.Frame):
         self.allLayouts = [baseLayoutDf.copy()]*len(levels)
         self.levelIndex = 0
         self.levelValueIndex = 0
-        #self.currentpalette = ['#808080']+sns.color_palette().as_hex()
         self.currentpalette = ['#808080']+sns.color_palette('husl',len(levelValues[self.levelIndex])).as_hex()
 
         def modifyPlatePlot():
             #Remove all axis elements
             fig_ax1.set_xlim((0, max(baseLayoutDf['x'])+1))
             fig_ax1.set_ylim((0, max(baseLayoutDf['y'])+1))
-            fig_ax1.set_xticks([], [])
-            fig_ax1.set_yticks([], [])
+            fig_ax1.set_xticks([])
+            fig_ax1.set_yticks([])
             fig_ax1.set_xlabel('')
             fig_ax1.set_ylabel('')
             #Add plate dividing lines
@@ -488,12 +504,18 @@ class PlateLayoutPage(tk.Frame):
                 if infoDf.values[row][1] != 'DoNotLabel':
                     fig_ax1.annotate(infoDf.values[row][1],(baseLayoutDf.iloc[row,0]-0.6,baseLayoutDf.iloc[row,1]+0.5),size=7,ha='center',va='center')
 
-        g1 = sns.scatterplot(data=baseLayoutDf,x='x',y='y',ax=fig_ax1,color='#808080',s=200,markers=['o','X'],alpha=0.5,style='blank',style_order=[-1,0])
-        fig_ax1.legend_.remove()
-        modifyPlatePlot()
-
         self.canvas = FigureCanvasTkAgg(fig,master=plotFrame)
+        modifyPlatePlot()
+        self.path = sns.scatterplot(data=baseLayoutDf,x='x',y='y',ax=fig_ax1,color='#808080',alpha=0.5,s=200,markers=['o','X'],style='blank',style_order=[-1,0])
+        fig_ax1.legend_.remove()
         self.canvas.draw()
+        self.background = self.canvas.copy_from_bbox(fig_ax1.bbox)
+        self.trueBackground = self.canvas.copy_from_bbox(fig_ax1.bbox)
+        
+        #self.canvas.restore_region(background)
+        #fig_ax1.draw_artist(self.path)
+        #self.canvas.blit(fig_ax1.bbox)
+
         self.canvas.get_tk_widget().pack()
         
         def line_select_callback(eclick, erelease):
@@ -513,23 +535,26 @@ class PlateLayoutPage(tk.Frame):
         rectpropsdict = {'facecolor':self.currentpalette[self.levelValueIndex+1],'alpha':0.2,'edgecolor':self.currentpalette[self.levelValueIndex+1]}
         toggle_selector.RS = RectangleSelector(fig_ax1, line_select_callback,drawtype='box', useblit=True,button=[1, 3], minspanx=1, minspany=1,spancoords='pixels',interactive=True,rectprops=rectpropsdict)
         self.ts = toggle_selector.RS
-        self.canvas.mpl_connect('key_press_event', toggle_selector)
+        toggle_selector.RS.background = self.trueBackground 
         
         def updatePlatePlot(newlayout,key):
             currentcolor = self.currentpalette[key]
-            g1 = sns.scatterplot(data=newlayout,x='x',y='y',ax=fig_ax1,s=200,color='#ffffff',marker='o')
-            g1 = sns.scatterplot(data=newlayout,x='x',y='y',ax=fig_ax1,s=200,markers=['o','X'],alpha=0.5,style='blank',style_order=[-1,0],color=currentcolor)
+            self.path = sns.scatterplot(data=newlayout,x='x',y='y',ax=fig_ax1,s=200,color='#ffffff',marker='o')
+            self.path = sns.scatterplot(data=newlayout,x='x',y='y',ax=fig_ax1,s=200,alpha=0.5,markers=['o','X'],style='blank',style_order=[-1,0],color=currentcolor)
             fig_ax1.legend_.remove()
-            self.canvas.draw()
         
         def clearWells():
             MsgBox = tk.messagebox.askquestion ('Warning','Are you sure you want to clear all wells?',icon = 'warning')
             if MsgBox == 'yes':
                 self.currentLayout = baseLayoutDf.copy()
-                g1 = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,markers=['o','X'],style='blank',style_order=[-1,0],color='#ffffff')
-                g1 = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,markers=['o','X'],alpha=0.5,style='blank',style_order=[-1,0],color='#808080')
+                self.path = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,markers=['o','X'],style='blank',style_order=[-1,0],color='#ffffff')
+                self.path = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,s=200,markers=['o','X'],alpha=0.5,style='blank',style_order=[-1,0],color='#808080')
                 fig_ax1.legend_.remove()
-                self.canvas.draw()
+                self.canvas.restore_region(self.trueBackground)
+                self.canvas.blit(fig_ax1.bbox)
+                self.background = self.trueBackground#canvas.copy_from_bbox(fig_ax1.bbox)
+                toggle_selector.RS.background = self.trueBackground 
+                #self.canvas.draw()
         
         def changeLevelValue(advance):
             if advance:
@@ -551,8 +576,12 @@ class PlateLayoutPage(tk.Frame):
             
             changeLevelValueInLevelValueLabelList()
             rectpropsdict = {'facecolor':self.currentpalette[self.levelValueIndex+1],'alpha':0.2,'edgecolor':self.currentpalette[self.levelValueIndex+1]}
-            toggle_selector.RS = RectangleSelector(fig_ax1, line_select_callback,drawtype='box', useblit=True,button=[1, 3], minspanx=1, minspany=1,spancoords='pixels',interactive=True,rectprops=rectpropsdict)
-            self.canvas.draw()
+            toggle_selector.RS = RectangleSelector(fig_ax1, line_select_callback, useblit=True,drawtype='box',button=[1, 3], minspanx=1, minspany=1,spancoords='pixels',interactive=True,rectprops=rectpropsdict)
+            fig_ax1.draw_artist(self.path)
+            self.canvas.blit(fig_ax1.bbox)
+            self.background = self.canvas.copy_from_bbox(fig_ax1.bbox)
+            toggle_selector.RS.background = self.background 
+            #self.canvas.draw()
         
         def updateExperimentPlot():
             g1 = sns.scatterplot(data=baseLayoutDf,x='x',y='y',ax=fig_ax1,color='#ffffff',s=200,marker='o')
@@ -566,10 +595,13 @@ class PlateLayoutPage(tk.Frame):
                 if i in list(pd.unique(self.currentLayout['key'])):
                     hueorder.append(i)
                     modifiedPalette.append(self.currentpalette[i+1])
-            g1 = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,hue='key',hue_order=hueorder,palette=modifiedPalette,s=200,markers=['o','X'],alpha=0.5,style='blank',style_order=[-1,0])
+            self.path = sns.scatterplot(data=self.currentLayout,x='x',y='y',ax=fig_ax1,hue='key',hue_order=hueorder,palette=modifiedPalette,s=200,markers=['o','X'],alpha=0.5,style='blank',style_order=[-1,0])
             fig_ax1.legend_.remove()
-            #g1 = sns.scatterplot(data=baseLayoutDf,x='x',y='y',ax=fig_ax1,color='#808080',s=200,marker='o',alpha=0.5)
-            self.canvas.draw()
+            fig_ax1.draw_artist(self.path)
+            self.canvas.blit(fig_ax1.bbox)
+            self.background = self.canvas.copy_from_bbox(fig_ax1.bbox)
+            toggle_selector.RS.background = self.background 
+            #self.canvas.draw()
 
         def changeLevel(advance):
             self.levelValueIndex = 0
@@ -607,7 +639,7 @@ class PlateLayoutPage(tk.Frame):
 
         #Level labels
         levelLabelWindow = tk.Frame(self)
-        levelLabelWindow.grid(row=2,column=0)
+        levelLabelWindow.grid(row=1,column=0)
         
         levelTitle = tk.Label(levelLabelWindow,text='Level: ')
         levelTitle.grid(row=0,column=0,sticky=tk.W)
@@ -638,7 +670,7 @@ class PlateLayoutPage(tk.Frame):
 
         #Level value labels
         levelValueLabelWindow = tk.Frame(self)
-        levelValueLabelWindow.grid(row=3,column=0)
+        levelValueLabelWindow.grid(row=2,column=0)
 
         levelValueTitle = tk.Label(levelValueLabelWindow,text='Level Value: ')
         levelValueTitle.grid(row=0,column=0,sticky=tk.W+tk.E)
@@ -712,6 +744,7 @@ class PlateLayoutPage(tk.Frame):
                     currentlabel.configure(text=self.blanktext,borderwidth=0, relief="solid")
         
         def selectWells(mark,immediate):
+
             wellSelectionBox = toggle_selector.RS.corners
             ll = np.array([wellSelectionBox[0][0], wellSelectionBox[1][0]])  # lower-left
             ur = np.array([wellSelectionBox[0][2], wellSelectionBox[1][2]])  # upper-right
@@ -730,11 +763,15 @@ class PlateLayoutPage(tk.Frame):
                 updatePlatePlot(changedInbox,self.levelValueIndex+1)
                 if immediate == 'yes' and self.levelValueIndex != maxNumLevelValues-1:
                     changeLevelValue(True) 
+                else:
+                    toggle_selector.RS.background = self.background 
+                    fig_ax1.draw_artist(self.path)
+                    self.canvas.blit(fig_ax1.bbox)
             else:
                 changedInbox['key'] = -1
                 self.currentLayout.loc[inidx] = changedInbox 
                 updatePlatePlot(changedInbox,0)
-        
+
         def copySelection():
             wellSelectionBox = toggle_selector.RS.corners
             ll = np.array([wellSelectionBox[0][0], wellSelectionBox[1][0]])  # lower-left
@@ -956,23 +993,21 @@ class PlateLayoutPage(tk.Frame):
                 print('Not all levels arranged')
         
         selectionWindow = tk.Frame(self)
-        selectionWindow.grid(row=4,column=0)
+        selectionWindow.grid(row=3,column=0)
         advanceVar = tk.StringVar()
         advanceVar.set('yes')
         tk.Button(selectionWindow, text="Deselect Wells",command=lambda: selectWells(False,advanceVar.get())).grid(row=0,column=0)
         tk.Button(selectionWindow, text="Select Wells",command=lambda: selectWells(True,advanceVar.get())).grid(row=0,column=1)
         
-        tk.Checkbutton(self,text="Immediately advance level value",variable=advanceVar,onvalue='yes',offvalue='no').grid(row=5,column=0)
+        tk.Checkbutton(self,text="Immediately advance level value",variable=advanceVar,onvalue='yes',offvalue='no').grid(row=4,column=0)
         
         editWindow = tk.Frame(self)
-        editWindow.grid(row=6,column=0)
+        editWindow.grid(row=5,column=0)
         tk.Button(editWindow, text="Copy selection",command=lambda: copySelection()).grid(row=0,column=0)
         tk.Button(editWindow, text="Paste selection",command=lambda: pasteSelection()).grid(row=0,column=1)
         
-        tk.Button(self, text="Clear All Wells",command=lambda: clearWells()).grid(row=8,column=0)
-        
         actionWindow = tk.Frame(self)
-        actionWindow.grid(row=7,column=0)
+        actionWindow.grid(row=6,column=0)
 
         actionVar = tk.StringVar()
         actionVar.set('tile')
@@ -997,8 +1032,10 @@ class PlateLayoutPage(tk.Frame):
 
         tk.Button(actionWindow, text="Perform Action",command=lambda: operateOnSelection(actionVar.get(),areaVar.get(),directionVar.get())).grid(row=0,column=3,rowspan=2)
 
+        tk.Button(self, text="Clear All Wells",command=lambda: clearWells()).grid(row=7,column=0)
+        
         buttonWindow = tk.Frame(self)
-        buttonWindow.grid(row=9,column=0)
+        buttonWindow.grid(row=8,column=0)
         
         self.FinishButton = tk.Button(buttonWindow, text="Finish",command=lambda: collectInputs(),font='Helvetica 14 bold')
         self.FinishButton.grid(row=0,column=0)

@@ -21,7 +21,7 @@ import cytokineDataProcessing as cydp
 import cellDataProcessing as cdp
 import proliferationDataProcessing as pdp
 import singleCellDataProcessing as scdp
-import automatedCBAProcessingGUI as autoCBA
+#import automatedCBAProcessingGUI as autoCBA
 import tkinter as tk
 
 
@@ -57,31 +57,37 @@ class DataProcessingStartPage(tk.Frame):
         l2d = tk.Label(mainWindow,text="Single Cell:",padx = 20).grid(row=4,column=0,sticky=tk.W)
         
         def createDataFrame(dataType):
-            dataProcessingMaster(folderName,expNum,dataType,ex_data)
-      
+            dataProcessingMaster(folderName,expNum,dataType,ex_data,v3.get())
+        
         l3 = tk.Label(mainWindow, text="""Action: """).grid(row=0,column=1,sticky=tk.W)
         
         cytCalibrationParametersButton = tk.Button(mainWindow,text='Enter CBA bead calibration parameters',command=lambda: master.switch_frame(cydp.CalibrationParameterPage,folderName,expNum,ex_data,DataProcessingStartPage,bPage))
         cytCalibrationParametersButton.grid(row=1,column=1,sticky=tk.W)
-        cytCalibrationParametersButton = tk.Button(mainWindow,text='Create CBA gates',command=lambda: master.switch_frame(autoCBA.AutomateCBAStartPage,folderName,expNum,ex_data,DataProcessingStartPage,bPage))
-        cytCalibrationParametersButton.grid(row=1,column=2,sticky=tk.W)
-        cytDfButton = tk.Button(mainWindow,text='Create dataframes',command=lambda: createDataFrame('cyt'))
-        cytDfButton.grid(row=1,column=3,sticky=tk.W)
+        #cytCalibrationParametersButton = tk.Button(mainWindow,text='Create CBA gates',command=lambda: master.switch_frame(autoCBA.AutomateCBAStartPage,folderName,expNum,ex_data,DataProcessingStartPage,bPage))
+        #cytCalibrationParametersButton.grid(row=1,column=2,sticky=tk.W)
+        cytDfButton = tk.Button(mainWindow,text='Create dataframe',command=lambda: createDataFrame('cyt'))
+        cytDfButton.grid(row=1,column=2,sticky=tk.W)
 
-        cellDfButton = tk.Button(mainWindow,text='Create dataframes',command=lambda: createDataFrame('cell'))
-        cellDfButton.grid(row=2,column=1,sticky=tk.W)
+        cellDfButton = tk.Button(mainWindow,text='Create dataframe',command=lambda: createDataFrame('cell'))
+        cellDfButton.grid(row=2,column=2,sticky=tk.W)
         #cellAbPanelButton = tk.Button(mainWindow,text='Edit antibody panel',command=lambda: master.switch_frame(cdp.MarkerNumberPage,folderName,expNum,ex_data,DataProcessingStartPage,bPage))
         #cellAbPanelButton.grid(row=2,column=2,sticky=tk.W)
         
         prolifGenerationGatesButton = tk.Button(mainWindow,text='Edit generation gates',command=lambda: master.switch_frame(pdp.GatingPage,folderName,expNum,ex_data,DataProcessingStartPage,bPage))
         prolifGenerationGatesButton.grid(row=3,column=1,sticky=tk.W)
-        prolifDfButton = tk.Button(mainWindow,text='Create dataframes',command=lambda: createDataFrame('prolif'))
+        prolifDfButton = tk.Button(mainWindow,text='Create dataframe',command=lambda: createDataFrame('prolif'))
         prolifDfButton.grid(row=3,column=2,sticky=tk.W)
 
         #completeSingleCellDfButton = tk.Button(mainWindow,text='Create complete dataframes')
         #completeSingleCellDfButton.grid(row=4,column=2,sticky=tk.W)
-        singleCellDfButton = tk.Button(mainWindow,text='Create dataframes',command=lambda: createDataFrame('singlecell'))
-        singleCellDfButton.grid(row=4,column=1,sticky=tk.W)
+        singleCellDfButton = tk.Button(mainWindow,text='Create dataframe',command=lambda: createDataFrame('singlecell'))
+        singleCellDfButton.grid(row=4,column=2,sticky=tk.W)
+        cbWindow = tk.Frame(mainWindow)
+        cbWindow.grid(row=4,column=1,sticky=tk.W)
+        l3 = tk.Label(cbWindow,text='Use empty wells?').grid(row=0,column=0,sticky=tk.W)
+        v3 = tk.BooleanVar(value=False)
+        cb = tk.Checkbutton(cbWindow, variable=v3)
+        cb.grid(row=0,column=1,sticky=tk.W)
 
         for i,button in enumerate([cytDfButton,cellDfButton,prolifDfButton,prolifGenerationGatesButton,singleCellDfButton]):
             if i == 0:
@@ -108,7 +114,7 @@ class DataProcessingStartPage(tk.Frame):
         tk.Button(buttonWindow, text="Back",command=lambda: master.switch_frame(backPage,folderName)).grid(row=5,column=1)
         tk.Button(buttonWindow, text="Quit",command=quit).grid(row=5,column=2)
 
-def dataProcessingMaster(folderName,expNum,dataType,ex_data):
+def dataProcessingMaster(folderName,expNum,dataType,ex_data,useBlankWells):
     print('Creating Dataframes for: '+str(folderName))
     if dataType == 'singlecell' or dataType == 'prolif':
         parameterExtension = 'cell'
@@ -139,7 +145,7 @@ def dataProcessingMaster(folderName,expNum,dataType,ex_data):
     elif(dataType == 'singlecell'):
         dataType = 'singlecell'
         if experimentFormat == 'plate':
-            scdp.createPlateSingleCellDataFrame(folderName,experimentParameters,experimentLevelLayoutDict)
+            scdp.createPlateSingleCellDataFrame(folderName,experimentParameters,experimentLevelLayoutDict,useBlankWells)
         else:
             scdf = scdp.createTubeSingleCellDataFrame(folderName,experimentParameters,experimentLevelLayoutDict)
     print(dataType+' dataframe created!')

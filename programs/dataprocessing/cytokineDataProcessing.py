@@ -31,9 +31,11 @@ bdHumanInfKitDict = {'IL-12p70':70000,'IL-1B':17300,'IL-8':8904}
 bdHumanChemokineKitDict = {'IP-10':86000,'MCP-1':13000,'MIG':11700,'RANTES':7809,'IL-8':8904}
 #Legendplex 13-plex mouse th kit
 legendPlexMouseThKitDict = {'IFNg':15652,'IL-5':26200,'TNFa':25896,'IL-2':17231,'IL-6':21709,'IL-4':13500,'IL-10':20641,'IL-9':14300,'IL-17A':14978,'IL-17F':14900,'IL-21':14400,'IL-22':16800,'IL-13':12300}
+#Legendplex 13-plex mouse macrophage kit
+legendPlexMouseMacrophageKitDict = {'G-CSF':18800,'GM-CSF':14000,'IL-12':75000,'IL-12p40':40000,'IL-18':18000,'IL-1b':17500,'IL-23':55000,'IL-34':39000,'IL-7':17000,'KC':11000,'MCP-1':12000,'TARC':8000,'TGFb':25000}
 
 #Combine all cytokine bead kit molar masses:
-listOfKitDicts = [legendPlexMouseThKitDict,bdMouseThKitDict,bdHumanInfKitDict,bdMouseInfKitDict,bdHumanChemokineKitDict]
+listOfKitDicts = [legendPlexMouseThKitDict,bdMouseThKitDict,bdHumanInfKitDict,bdMouseInfKitDict,bdHumanChemokineKitDict,legendPlexMouseMacrophageKitDict]
 completeCytokineMWDict = {}
 for dictName in listOfKitDicts:
     completeCytokineMWDict.update(dictName)
@@ -95,6 +97,7 @@ def parseCytokineCSVHeaders(columns):
             cytokine = populationNameVsStatisticSplit[0].split('/')[-1]
         else:
             cytokine = populationNameVsStatisticSplit[0].split('/')[-2]
+        print(cytokine)
         newMultiIndexList.append([cytokine])
     return newMultiIndexList
 
